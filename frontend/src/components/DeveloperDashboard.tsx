@@ -551,17 +551,6 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const recentOrders = sharedOrders.filter(order => order.timestamp >= sevenDaysAgo);
     
-    // Driver performance for selected date
-    const driverPerformance = drivers.map(driver => {
-      const driverOrders = filteredOrders.filter(order => order.assignedDriverId === driver.id);
-      const completedDriverOrders = driverOrders.filter(order => order.status === 'delivered');
-      return {
-        name: driver.username,
-        totalOrders: driverOrders.length,
-        completedOrders: completedDriverOrders.length,
-        completionRate: driverOrders.length > 0 ? Math.round((completedDriverOrders.length / driverOrders.length) * 100) : 0
-      };
-    });
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-6">
@@ -770,75 +759,6 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
             </div>
           </div>
 
-          {/* Driver Performance */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 mb-8">
-            <h2 className="text-xl font-bold text-white mb-6">🚚 Driver Performance</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {driverPerformance.map((driver, index) => (
-                <div key={index} className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <h3 className="text-white font-semibold mb-2">{driver.name}</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Total Orders:</span>
-                      <span className="text-white">{driver.totalOrders}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Completed:</span>
-                      <span className="text-green-400">{driver.completedOrders}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Success Rate:</span>
-                      <span className="text-blue-400">{driver.completionRate}%</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {driverPerformance.length === 0 && (
-                <div className="col-span-full text-center py-8 text-white/50">
-                  <div className="text-4xl mb-4">🚚</div>
-                  <p>No driver performance data available</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Orders for Selected Date */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-            <h2 className="text-xl font-bold text-white mb-6">📅 Orders for {new Date(selectedDate).toLocaleDateString()}</h2>
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {filteredOrders.slice(0, 10).map((order, index) => (
-                <div key={order.id} className="bg-white/5 rounded-lg p-3 border border-white/10">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-white font-medium">Order #{order.id}</p>
-                      <p className="text-white/70 text-sm">{order.customerName} - {order.items}</p>
-                      <p className="text-white/50 text-xs">{order.storeName}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        order.status === 'delivered' ? 'bg-green-500/20 text-green-400' :
-                        order.status === 'picked_up' ? 'bg-blue-500/20 text-blue-400' :
-                        'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {order.status === 'delivered' ? 'Delivered' :
-                         order.status === 'picked_up' ? 'In Transit' : 'Pending'}
-                      </span>
-                      <p className="text-white/50 text-xs mt-1">
-                        {order.timestamp.toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {filteredOrders.length === 0 && (
-                <div className="text-center py-8 text-white/50">
-                  <div className="text-4xl mb-4">📅</div>
-                  <p>No orders found for selected date</p>
-                  <p className="text-sm mt-2">Try selecting a different date</p>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     );
