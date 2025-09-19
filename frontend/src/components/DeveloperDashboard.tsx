@@ -81,7 +81,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
   setPaymentData,
   setStoreOwnerBills
 }) => {
-  const [currentView, setCurrentView] = useState<'main' | 'manage-stores' | 'manage-drivers'>('main');
+  const [currentView, setCurrentView] = useState<'main' | 'manage-stores' | 'manage-drivers' | 'analytics'>('main');
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [newStore, setNewStore] = useState<Omit<Store, 'id' | 'createdAt'>>({
     name: '',
@@ -218,12 +218,14 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
               <p className="text-white/70">Create, edit, and manage driver accounts and profiles.</p>
             </button>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
+            <button
+              onClick={() => setCurrentView('analytics')}
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl p-8 border border-white/20 transition-all duration-200 text-left group"
+            >
               <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-xl font-bold text-white mb-2">System Analytics</h3>
+              <h3 className="text-xl font-bold text-white mb-2 group-hover:text-gray-200">System Analytics</h3>
               <p className="text-white/70">View system performance, delivery statistics, and user activity.</p>
-              <p className="text-white/50 text-sm mt-2">Coming soon...</p>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -496,6 +498,227 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Analytics View
+  if (currentView === 'analytics') {
+    // Calculate analytics data
+    const totalOrders = sharedOrders.length;
+    const completedOrders = sharedOrders.filter(order => order.status === 'delivered').length;
+    const pendingOrders = sharedOrders.filter(order => order.status === 'pending').length;
+    const inTransitOrders = sharedOrders.filter(order => order.status === 'picked_up').length;
+    
+    // Orders by store
+    const ordersByStore = stores.map(store => ({
+      name: store.name,
+      count: sharedOrders.filter(order => order.storeId === store.id).length
+    }));
+    
+    // Orders by status
+    const ordersByStatus = [
+      { status: 'Pending', count: pendingOrders, color: 'bg-yellow-500' },
+      { status: 'In Transit', count: inTransitOrders, color: 'bg-blue-500' },
+      { status: 'Delivered', count: completedOrders, color: 'bg-green-500' }
+    ];
+    
+    // Recent activity (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentOrders = sharedOrders.filter(order => order.timestamp >= sevenDaysAgo);
+    
+    // Driver performance
+    const driverPerformance = drivers.map(driver => {
+      const driverOrders = sharedOrders.filter(order => order.assignedDriverId === driver.id);
+      const completedDriverOrders = driverOrders.filter(order => order.status === 'delivered');
+      return {
+        name: driver.username,
+        totalOrders: driverOrders.length,
+        completedOrders: completedDriverOrders.length,
+        completionRate: driverOrders.length > 0 ? Math.round((completedDriverOrders.length / driverOrders.length) * 100) : 0
+      };
+    });
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-white">System Analytics</h1>
+            <button
+              onClick={() => setCurrentView('main')}
+              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm border border-white/20"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/70 text-sm">Total Orders</p>
+                  <p className="text-3xl font-bold text-white">{totalOrders}</p>
+                </div>
+                <div className="text-4xl">📦</div>
+              </div>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/70 text-sm">Completed</p>
+                  <p className="text-3xl font-bold text-green-400">{completedOrders}</p>
+                </div>
+                <div className="text-4xl">✅</div>
+              </div>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/70 text-sm">In Transit</p>
+                  <p className="text-3xl font-bold text-blue-400">{inTransitOrders}</p>
+                </div>
+                <div className="text-4xl">🚚</div>
+              </div>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/70 text-sm">Pending</p>
+                  <p className="text-3xl font-bold text-yellow-400">{pendingOrders}</p>
+                </div>
+                <div className="text-4xl">⏳</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Charts and Analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Orders by Store */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <h2 className="text-xl font-bold text-white mb-6">📊 Orders by Store</h2>
+              <div className="space-y-4">
+                {ordersByStore.map((store, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+                      <span className="text-white font-medium">{store.name}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-white/70">{store.count} orders</span>
+                      <div className="w-20 bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-blue-500 h-2 rounded-full" 
+                          style={{ width: `${totalOrders > 0 ? (store.count / totalOrders) * 100 : 0}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {ordersByStore.length === 0 && (
+                  <p className="text-white/50 text-center py-4">No orders data available</p>
+                )}
+              </div>
+            </div>
+
+            {/* Orders by Status */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <h2 className="text-xl font-bold text-white mb-6">📈 Orders by Status</h2>
+              <div className="space-y-4">
+                {ordersByStatus.map((status, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-4 h-4 ${status.color} rounded-full`}></div>
+                      <span className="text-white font-medium">{status.status}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-white/70">{status.count} orders</span>
+                      <div className="w-20 bg-gray-700 rounded-full h-2">
+                        <div 
+                          className={`${status.color} h-2 rounded-full`} 
+                          style={{ width: `${totalOrders > 0 ? (status.count / totalOrders) * 100 : 0}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Driver Performance */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 mb-8">
+            <h2 className="text-xl font-bold text-white mb-6">🚚 Driver Performance</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {driverPerformance.map((driver, index) => (
+                <div key={index} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <h3 className="text-white font-semibold mb-2">{driver.name}</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Total Orders:</span>
+                      <span className="text-white">{driver.totalOrders}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Completed:</span>
+                      <span className="text-green-400">{driver.completedOrders}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Success Rate:</span>
+                      <span className="text-blue-400">{driver.completionRate}%</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {driverPerformance.length === 0 && (
+                <div className="col-span-full text-center py-8 text-white/50">
+                  <div className="text-4xl mb-4">🚚</div>
+                  <p>No driver performance data available</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <h2 className="text-xl font-bold text-white mb-6">📅 Recent Activity (Last 7 Days)</h2>
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {recentOrders.slice(0, 10).map((order, index) => (
+                <div key={order.id} className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-white font-medium">Order #{order.id}</p>
+                      <p className="text-white/70 text-sm">{order.customerName} - {order.items}</p>
+                      <p className="text-white/50 text-xs">{order.storeName}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        order.status === 'delivered' ? 'bg-green-500/20 text-green-400' :
+                        order.status === 'picked_up' ? 'bg-blue-500/20 text-blue-400' :
+                        'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {order.status === 'delivered' ? 'Delivered' :
+                         order.status === 'picked_up' ? 'In Transit' : 'Pending'}
+                      </span>
+                      <p className="text-white/50 text-xs mt-1">
+                        {order.timestamp.toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {recentOrders.length === 0 && (
+                <div className="text-center py-8 text-white/50">
+                  <div className="text-4xl mb-4">📅</div>
+                  <p>No recent activity</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
