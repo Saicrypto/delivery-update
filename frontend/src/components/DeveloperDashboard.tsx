@@ -97,6 +97,10 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
     email: '',
     phoneNumber: ''
   });
+  
+  // Analytics filtering state
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [storePaymentStatuses, setStorePaymentStatuses] = useState<{[storeId: number]: 'pending' | 'completed'}>({});
 
   // Store Management
   const handleAddStore = (e: React.FormEvent) => {
@@ -154,6 +158,14 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
 
   const handleDeleteDriver = (id: number) => {
     setDrivers(drivers.filter(driver => driver.id !== id));
+  };
+
+  // Payment status management
+  const handlePaymentStatusChange = (storeId: number, status: 'pending' | 'completed') => {
+    setStorePaymentStatuses(prev => ({
+      ...prev,
+      [storeId]: status
+    }));
   };
 
   // Main Dashboard View
@@ -507,16 +519,24 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
 
   // Analytics View
   if (currentView === 'analytics') {
-    // Calculate analytics data
-    const totalOrders = sharedOrders.length;
-    const completedOrders = sharedOrders.filter(order => order.status === 'delivered').length;
-    const pendingOrders = sharedOrders.filter(order => order.status === 'pending').length;
-    const inTransitOrders = sharedOrders.filter(order => order.status === 'picked_up').length;
+    // Filter orders by selected date
+    const selectedDateObj = new Date(selectedDate);
+    const filteredOrders = sharedOrders.filter(order => {
+      const orderDate = new Date(order.timestamp);
+      return orderDate.toDateString() === selectedDateObj.toDateString();
+    });
     
-    // Orders by store
+    // Calculate analytics data for selected date
+    const totalOrders = filteredOrders.length;
+    const completedOrders = filteredOrders.filter(order => order.status === 'delivered').length;
+    const pendingOrders = filteredOrders.filter(order => order.status === 'pending').length;
+    const inTransitOrders = filteredOrders.filter(order => order.status === 'picked_up').length;
+    
+    // Orders by store for selected date
     const ordersByStore = stores.map(store => ({
       name: store.name,
-      count: sharedOrders.filter(order => order.storeId === store.id).length
+      count: filteredOrders.filter(order => order.storeId === store.id).length,
+      storeId: store.id
     }));
     
     // Orders by status
@@ -531,9 +551,9 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const recentOrders = sharedOrders.filter(order => order.timestamp >= sevenDaysAgo);
     
-    // Driver performance
+    // Driver performance for selected date
     const driverPerformance = drivers.map(driver => {
-      const driverOrders = sharedOrders.filter(order => order.assignedDriverId === driver.id);
+      const driverOrders = filteredOrders.filter(order => order.assignedDriverId === driver.id);
       const completedDriverOrders = driverOrders.filter(order => order.status === 'delivered');
       return {
         name: driver.username,
@@ -554,6 +574,28 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
             >
               ← Back to Dashboard
             </button>
+          </div>
+
+          {/* Date Filter */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 mb-8">
+            <h2 className="text-xl font-bold text-white mb-4">📅 Date Filter</h2>
+            <div className="flex items-center space-x-4">
+              <label className="text-white font-medium">Select Date:</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-4 py-2 rounded-lg bg-white/90 border border-gray-300 text-gray-800 focus:outline-none focus:border-blue-400"
+              />
+              <span className="text-white/70 text-sm">
+                Showing data for: {new Date(selectedDate).toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </span>
+            </div>
           </div>
 
           {/* Key Metrics */}
@@ -601,29 +643,51 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
 
           {/* Charts and Analytics */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Orders by Store */}
+            {/* Orders by Store with Payment Status */}
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <h2 className="text-xl font-bold text-white mb-6">📊 Orders by Store</h2>
+              <h2 className="text-xl font-bold text-white mb-6">📊 Orders by Store & Payment Status</h2>
               <div className="space-y-4">
                 {ordersByStore.map((store, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-                      <span className="text-white font-medium">{store.name}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-white/70">{store.count} orders</span>
-                      <div className="w-20 bg-gray-700 rounded-full h-2">
-                        <div 
-                          className="bg-blue-500 h-2 rounded-full" 
-                          style={{ width: `${totalOrders > 0 ? (store.count / totalOrders) * 100 : 0}%` }}
-                        ></div>
+                  <div key={index} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+                        <span className="text-white font-medium">{store.name}</span>
                       </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-white/70">{store.count} orders</span>
+                        <div className="w-20 bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-blue-500 h-2 rounded-full" 
+                            style={{ width: `${totalOrders > 0 ? (store.count / totalOrders) * 100 : 0}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Payment Status Dropdown */}
+                    <div className="flex items-center space-x-3">
+                      <label className="text-white/70 text-sm font-medium">Payment Status:</label>
+                      <select
+                        value={storePaymentStatuses[store.storeId] || 'pending'}
+                        onChange={(e) => handlePaymentStatusChange(store.storeId, e.target.value as 'pending' | 'completed')}
+                        className="px-3 py-1 rounded-lg bg-white/90 border border-gray-300 text-gray-800 text-sm focus:outline-none focus:border-blue-400"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        (storePaymentStatuses[store.storeId] || 'pending') === 'completed' 
+                          ? 'bg-green-500/20 text-green-400' 
+                          : 'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {(storePaymentStatuses[store.storeId] || 'pending') === 'completed' ? '✅ Completed' : '⏳ Pending'}
+                      </span>
                     </div>
                   </div>
                 ))}
                 {ordersByStore.length === 0 && (
-                  <p className="text-white/50 text-center py-4">No orders data available</p>
+                  <p className="text-white/50 text-center py-4">No orders data available for selected date</p>
                 )}
               </div>
             </div>
@@ -649,6 +713,59 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Summary */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 mb-8">
+            <h2 className="text-xl font-bold text-white mb-6">💰 Payment Summary for {new Date(selectedDate).toLocaleDateString()}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <h3 className="text-white font-semibold">Store Payment Status</h3>
+                {stores.map(store => {
+                  const paymentStatus = storePaymentStatuses[store.id] || 'pending';
+                  const orderCount = ordersByStore.find(s => s.storeId === store.id)?.count || 0;
+                  return (
+                    <div key={store.id} className="flex items-center justify-between bg-white/5 rounded-lg p-3 border border-white/10">
+                      <div>
+                        <span className="text-white font-medium">{store.name}</span>
+                        <p className="text-white/70 text-sm">{orderCount} orders</p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        paymentStatus === 'completed' 
+                          ? 'bg-green-500/20 text-green-400' 
+                          : 'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {paymentStatus === 'completed' ? '✅ Completed' : '⏳ Pending'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <div className="space-y-3">
+                <h3 className="text-white font-semibold">Payment Statistics</h3>
+                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Completed Payments:</span>
+                      <span className="text-green-400 font-semibold">
+                        {Object.values(storePaymentStatuses).filter(status => status === 'completed').length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Pending Payments:</span>
+                      <span className="text-yellow-400 font-semibold">
+                        {Object.values(storePaymentStatuses).filter(status => status === 'pending').length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Total Stores:</span>
+                      <span className="text-white font-semibold">{stores.length}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -685,11 +802,11 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
             </div>
           </div>
 
-          {/* Recent Activity */}
+          {/* Orders for Selected Date */}
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-            <h2 className="text-xl font-bold text-white mb-6">📅 Recent Activity (Last 7 Days)</h2>
+            <h2 className="text-xl font-bold text-white mb-6">📅 Orders for {new Date(selectedDate).toLocaleDateString()}</h2>
             <div className="space-y-3 max-h-64 overflow-y-auto">
-              {recentOrders.slice(0, 10).map((order, index) => (
+              {filteredOrders.slice(0, 10).map((order, index) => (
                 <div key={order.id} className="bg-white/5 rounded-lg p-3 border border-white/10">
                   <div className="flex justify-between items-start">
                     <div>
@@ -713,10 +830,11 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                   </div>
                 </div>
               ))}
-              {recentOrders.length === 0 && (
+              {filteredOrders.length === 0 && (
                 <div className="text-center py-8 text-white/50">
                   <div className="text-4xl mb-4">📅</div>
-                  <p>No recent activity</p>
+                  <p>No orders found for selected date</p>
+                  <p className="text-sm mt-2">Try selecting a different date</p>
                 </div>
               )}
             </div>
