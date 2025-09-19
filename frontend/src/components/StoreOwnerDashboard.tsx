@@ -1053,19 +1053,19 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 md:p-8 shadow-2xl max-w-2xl mx-auto border border-white/20">
               <h2 className="text-xl md:text-3xl font-bold text-white mb-4 md:mb-6">🚚 Dispatched!</h2>
               <div className="space-y-4 text-white/90">
-                <p className="text-lg">✅ {orders
+                <p className="text-lg">✅ {(sharedOrders || [])
                   .filter(order => {
                     // Filter by selected store ID only
-                    return selectedStore?.id ? order.storeId === selectedStore.id : true;
+                    return selectedStore?.id ? order.storeId === selectedStore.id : false;
                   }).length} orders are on the way to customers</p>
                 <p className="text-sm text-white/70">Driver left with all packages at {new Date().toLocaleTimeString()}</p>
                 
                 <div className="bg-white/5 rounded-lg p-4 mt-6 border border-white/10">
                   <h3 className="font-bold text-white mb-3">📦 Dispatched Orders:</h3>
-                  {orders
+                  {(sharedOrders || [])
                     .filter(order => {
                       // Filter by selected store ID only
-                      return selectedStore?.id ? order.storeId === selectedStore.id : true;
+                      return selectedStore?.id ? order.storeId === selectedStore.id : false;
                     })
                     .map((order, index) => (
                     <div key={order.id} className="text-sm text-white/80 mb-2">
@@ -1116,7 +1116,7 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
               
               {/* Live tracking data from shared orders */}
               <div className="space-y-4">
-                {storeOwnerId && sharedOrders.filter(order => order.storeOwnerId === storeOwnerId).map((order, index) => {
+                {selectedStore && sharedOrders.filter(order => order.storeId === selectedStore.id).map((order, index) => {
                   const currentStatus = order.status;
                   
                   const getStatusDetails = (status: string) => {
@@ -1638,7 +1638,7 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
              )}
 
                               {/* Ready to Dispatch Button */}
-                {orders.length > 0 && !editingOrder && (
+                {orders.filter(order => order.storeId === selectedStore?.id).length > 0 && !editingOrder && (
                              <div className="text-center mt-4 md:mt-8">
                  <motion.button
                       onClick={handleReadyToDispatch}
