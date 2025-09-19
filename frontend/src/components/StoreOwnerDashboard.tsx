@@ -201,6 +201,54 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
     }
   };
 
+  const handleBackNavigation = () => {
+    switch (step) {
+      case 'store-selection':
+        // From store selection, go back to login
+        if (onBackToLogin) {
+          onBackToLogin();
+        }
+        break;
+      case 'cart':
+        // From cart, go back to store selection
+        setStep('store-selection');
+        setSelectedStore(null);
+        break;
+      case 'adding':
+        // From adding orders, go back to cart
+        setStep('cart');
+        setCartOpen(true);
+        break;
+      case 'dispatching':
+        // From dispatching, go back to adding
+        setStep('adding');
+        setCartOpen(true);
+        break;
+      case 'tracking':
+        // From tracking, go back to dispatching
+        setStep('dispatching');
+        break;
+      case 'orders-list':
+        // From orders list, go back to cart
+        setStep('cart');
+        setCartOpen(true);
+        break;
+      case 'live-tracking':
+        // From live tracking, go back to tracking
+        setStep('tracking');
+        break;
+      case 'data-import':
+        // From data import, go back to adding
+        setStep('adding');
+        setCartOpen(true);
+        break;
+      default:
+        // Default fallback to store selection
+        setStep('store-selection');
+        setSelectedStore(null);
+    }
+  };
+
   // Stock management functions for Airavya oils
   const handleStockUpdate = (itemId: number, newQuantity: number) => {
     if (setAiravyaStock) {
@@ -972,17 +1020,14 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
             
             {step === 'data-import' && (
               <button
-                onClick={() => {
-                  setStep('adding');
-                  setCartOpen(true);
-                }}
+                onClick={handleBackNavigation}
                 className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm border border-white/20 mr-2"
               >
                 ← Back to Orders
               </button>
             )}
             <button
-              onClick={handleBackToLogin}
+              onClick={handleBackNavigation}
               className="bg-white/20 hover:bg-white/30 text-white px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm border border-white/20 text-sm md:text-base"
             >
               ← Back
@@ -1011,10 +1056,10 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                       return true;
                     })
                     .map((order, index) => (
-                      <div key={order.id} className="text-sm text-white/80 mb-2">
-                        #{index + 1} {order.customerName} - {order.items}
-                      </div>
-                    ))}
+                    <div key={order.id} className="text-sm text-white/80 mb-2">
+                      #{index + 1} {order.customerName} - {order.items}
+                    </div>
+                  ))}
                 </div>
                 
                 <div className="flex space-x-4 justify-center mt-6">
@@ -1448,7 +1493,7 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                              ))}
                            </select>
                            
-                           <input
+                                      <input
                              type="number"
                              min="1"
                              max={airavyaStock.find(oil => oil.name === selectedOil)?.quantity || 1}
@@ -1456,22 +1501,22 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                              onChange={(e) => setOilQuantity(parseInt(e.target.value) || 1)}
                              className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 text-base transition-all duration-200"
                              placeholder="Quantity"
-                             required
-                           />
+                      required
+                    />
                          </div>
                        ) : (
-                         <input
-                           value={currentOrder.items}
-                           onChange={(e) => setCurrentOrder({...currentOrder, items: e.target.value})}
+                    <input
+                      value={currentOrder.items}
+                      onChange={(e) => setCurrentOrder({...currentOrder, items: e.target.value})}
                            className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 text-base transition-all duration-200"
                            placeholder="Items to deliver (e.g., Pizza, Burger, Drinks)"
-                           required
-                         />
+                      required
+                    />
                        )}
                        
                        <textarea
-                         value={currentOrder.specialInstructions}
-                         onChange={(e) => setCurrentOrder({...currentOrder, specialInstructions: e.target.value})}
+                    value={currentOrder.specialInstructions}
+                    onChange={(e) => setCurrentOrder({...currentOrder, specialInstructions: e.target.value})}
                          className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 text-base resize-none transition-all duration-200"
                          placeholder="Special instructions (e.g., Extra spicy, No onions)"
                          rows={2}
