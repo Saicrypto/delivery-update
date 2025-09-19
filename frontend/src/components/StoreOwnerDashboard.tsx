@@ -112,9 +112,9 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
   const [selectedOil, setSelectedOil] = useState<string>('');
   const [oilQuantity, setOilQuantity] = useState<number>(1);
 
-  // Derived: shared orders belonging to this store owner only
-  const ownerSharedOrders = storeOwnerId
-    ? (sharedOrders || []).filter(o => o.storeOwnerId === storeOwnerId)
+  // Derived: shared orders belonging to this selected store only (no store owner filtering)
+  const storeFilteredOrders = selectedStore?.id
+    ? (sharedOrders || []).filter(o => o.storeId === selectedStore.id)
     : [];
   const [flyingPackages, setFlyingPackages] = useState<Array<{
     id: number;
@@ -288,12 +288,12 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
       handleStockDeduction(selectedOil, oilQuantity);
     }
     
-    // Also add to shared orders for global sync
-    if (setSharedOrders && storeOwnerId) {
+    // Also add to shared orders for global sync (store-based only)
+    if (setSharedOrders && selectedStore) {
       const sharedOrder: SharedOrder = {
         id: Math.max(0, ...sharedOrders.map(o => o.id)) + 1,
-        storeOwnerId: storeOwnerId,
-        storeOwnerName: `Store Owner ${storeOwnerId}`,
+        storeOwnerId: 1, // Single store owner ID
+        storeOwnerName: 'Store Owner',
         customerName: currentOrder.customerName,
         customerPhone: currentOrder.customerPhone,
         customerAddress: currentOrder.customerAddress,
@@ -303,8 +303,8 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
         timestamp: new Date(),
         status: 'pending',
         assignedDriverId: currentOrder.assignedDriverId,
-        storeId: selectedStore?.id,
-        storeName: selectedStore?.name
+        storeId: selectedStore.id,
+        storeName: selectedStore.name
       };
       setSharedOrders([...sharedOrders, sharedOrder]);
     }
@@ -587,12 +587,12 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
 
       setOrders([...orders, ...newOrders]);
       
-      // Also add to shared orders
-      if (setSharedOrders && storeOwnerId) {
+      // Also add to shared orders (store-based only)
+      if (setSharedOrders && selectedStore) {
         const sharedOrdersToAdd: SharedOrder[] = customers.map((customer, index) => ({
           id: Math.max(0, ...sharedOrders.map(o => o.id)) + index + 1,
-          storeOwnerId: storeOwnerId,
-          storeOwnerName: `Store Owner ${storeOwnerId}`,
+          storeOwnerId: 1, // Single store owner ID
+          storeOwnerName: 'Store Owner',
           customerName: customer.name,
           customerPhone: customer.phone,
           customerAddress: customer.address,
@@ -602,8 +602,8 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
           timestamp: new Date(),
           status: 'pending',
           assignedDriverId: undefined, // Imported orders start unassigned
-          storeId: selectedStore?.id,
-          storeName: selectedStore?.name
+          storeId: selectedStore.id,
+          storeName: selectedStore.name
         }));
         setSharedOrders([...sharedOrders, ...sharedOrdersToAdd]);
       }
@@ -1053,35 +1053,19 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 md:p-8 shadow-2xl max-w-2xl mx-auto border border-white/20">
               <h2 className="text-xl md:text-3xl font-bold text-white mb-4 md:mb-6">🚚 Dispatched!</h2>
               <div className="space-y-4 text-white/90">
-                <p className="text-lg">✅ {(storeOwnerId ? ownerSharedOrders : orders)
+                <p className="text-lg">✅ {orders
                   .filter(order => {
-                    // Filter by selected store ID - works for both local and shared orders
-                    if (selectedStore?.id && order.storeId) {
-                      return order.storeId === selectedStore.id;
-                    }
-                    // If no store info, fallback to storeOwner filtering for backwards compatibility
-                    if (storeOwnerId && 'storeOwnerId' in order) {
-                      return order.storeOwnerId === storeOwnerId;
-                    }
-                    // For local orders without store info, show all
-                    return true;
+                    // Filter by selected store ID only
+                    return selectedStore?.id ? order.storeId === selectedStore.id : true;
                   }).length} orders are on the way to customers</p>
                 <p className="text-sm text-white/70">Driver left with all packages at {new Date().toLocaleTimeString()}</p>
                 
                 <div className="bg-white/5 rounded-lg p-4 mt-6 border border-white/10">
                   <h3 className="font-bold text-white mb-3">📦 Dispatched Orders:</h3>
-                  {(storeOwnerId ? ownerSharedOrders : orders)
+                  {orders
                     .filter(order => {
-                      // Filter by selected store ID - works for both local and shared orders
-                      if (selectedStore?.id && order.storeId) {
-                        return order.storeId === selectedStore.id;
-                      }
-                      // If no store info, fallback to storeOwner filtering for backwards compatibility
-                      if (storeOwnerId && 'storeOwnerId' in order) {
-                        return order.storeOwnerId === storeOwnerId;
-                      }
-                      // For local orders without store info, show all
-                      return true;
+                      // Filter by selected store ID only
+                      return selectedStore?.id ? order.storeId === selectedStore.id : true;
                     })
                     .map((order, index) => (
                     <div key={order.id} className="text-sm text-white/80 mb-2">

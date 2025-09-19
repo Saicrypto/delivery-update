@@ -220,16 +220,7 @@ const App: React.FC = () => {
       return;
     }
 
-    // Check dynamically created accounts only for the selected role
-    if (selectedRole === 'store_owner') {
-      const storeOwner = storeOwners.find(owner => owner.username === username && owner.password === password);
-      if (storeOwner) {
-        setIsLoggedIn(true);
-        setLoggedInRole('store_owner');
-        setLoggedInUserId(storeOwner.id);
-        return;
-      }
-    }
+    // Single store owner login only - no dynamic accounts
 
     if (selectedRole === 'driver') {
       const driver = drivers.find(d => d.username === username && d.password === password);

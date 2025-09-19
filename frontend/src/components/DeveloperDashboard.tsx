@@ -84,7 +84,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
   setPaymentData,
   setStoreOwnerBills
 }) => {
-  const [currentView, setCurrentView] = useState<'main' | 'manage-store-owners' | 'manage-stores' | 'manage-drivers' | 'assign-deliveries'>('main');
+  const [currentView, setCurrentView] = useState<'main' | 'manage-stores' | 'manage-drivers' | 'assign-deliveries'>('main');
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [newStore, setNewStore] = useState<Omit<Store, 'id' | 'createdAt'>>({
     name: '',
@@ -302,14 +302,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
 
           {/* Management Options */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <button
-              onClick={() => setCurrentView('manage-store-owners')}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl p-8 border border-white/20 transition-all duration-200 text-left group"
-            >
-              <div className="text-4xl mb-4">👥</div>
-              <h3 className="text-xl font-bold text-white mb-2 group-hover:text-gray-200">Manage Store Owners</h3>
-              <p className="text-white/70">Create, edit, and manage store owner accounts. Assign item types to stores.</p>
-            </button>
+            {/* Store Owner management removed - single login only */}
 
             <button
               onClick={() => setCurrentView('manage-drivers')}
