@@ -65,6 +65,7 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
   const [driverShowsThumbsUp, setDriverShowsThumbsUp] = useState(false);
   const [importData, setImportData] = useState('');
   const [isProcessingImport, setIsProcessingImport] = useState(false);
+  const [activeTab, setActiveTab] = useState<'customer' | 'order' | 'delivery'>('customer');
 
   // Derived: shared orders belonging to this store owner only
   const ownerSharedOrders = storeOwnerId
@@ -1193,56 +1194,151 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                className="relative rounded-xl p-4 bg-gray-900/70 border border-white/10"
                id="package-form"
              >
-               <form onSubmit={editingOrder ? handleUpdateOrder : handleAddOrder} className="space-y-2 md:space-y-3">
-                 {/* Ultra compact mobile-first layout */}
-                    <input
-                      type="text"
-                      value={currentOrder.customerName}
-                      onChange={(e) => setCurrentOrder({...currentOrder, customerName: e.target.value})}
-                   className="w-full px-2 md:px-3 py-2 md:py-3 rounded bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 text-base"
-                   placeholder="Customer name"
-                      required
-                    />
-                    <input
-                      type="tel"
-                      value={currentOrder.customerPhone}
-                      onChange={(e) => setCurrentOrder({...currentOrder, customerPhone: e.target.value})}
-                   className="w-full px-2 md:px-3 py-2 md:py-3 rounded bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 text-base"
-                   placeholder="Phone number"
-                      required
-                    />
-                                      <input
-                      value={currentOrder.customerAddress}
-                      onChange={(e) => setCurrentOrder({...currentOrder, customerAddress: e.target.value})}
-                   className="w-full px-2 md:px-3 py-2 md:py-3 rounded bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-fuchsia-400 text-base"
-                   placeholder="Delivery address"
-                      required
-                    />
-                      <input
-                        value={currentOrder.customerLocation}
-                        onChange={(e) => setCurrentOrder({...currentOrder, customerLocation: e.target.value})}
-                   className="w-full px-2 md:px-3 py-2 md:py-3 rounded bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-fuchsia-400 text-base"
-                   placeholder="City/Location (optional)"
-                 />
-                    <input
-                      value={currentOrder.items}
-                      onChange={(e) => setCurrentOrder({...currentOrder, items: e.target.value})}
-                   className="w-full px-2 md:px-3 py-2 md:py-3 rounded bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 text-base"
-                   placeholder="Items to deliver"
-                      required
-                    />
-                  <input
-                    value={currentOrder.specialInstructions}
-                    onChange={(e) => setCurrentOrder({...currentOrder, specialInstructions: e.target.value})}
-                   className="w-full px-2 md:px-3 py-2 md:py-3 rounded bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 text-base"
-                   placeholder="Special instructions (optional)"
-                  />
+               {/* Mobile-Friendly Tab Navigation */}
+               <div className="mb-4">
+                 <div className="flex bg-gray-800/50 rounded-lg p-1">
+                   <button
+                     onClick={() => setActiveTab('customer')}
+                     className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
+                       activeTab === 'customer'
+                         ? 'bg-cyan-500 text-white shadow-lg'
+                         : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+                     }`}
+                   >
+                     👤 Customer
+                   </button>
+                   <button
+                     onClick={() => setActiveTab('order')}
+                     className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
+                       activeTab === 'order'
+                         ? 'bg-green-500 text-white shadow-lg'
+                         : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+                     }`}
+                   >
+                     📦 Order
+                   </button>
+                   <button
+                     onClick={() => setActiveTab('delivery')}
+                     className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
+                       activeTab === 'delivery'
+                         ? 'bg-fuchsia-500 text-white shadow-lg'
+                         : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+                     }`}
+                   >
+                     🚚 Delivery
+                   </button>
+                 </div>
+               </div>
+
+               <form onSubmit={editingOrder ? handleUpdateOrder : handleAddOrder} className="space-y-3">
+                 {/* Tab Content */}
+                 <AnimatePresence mode="wait">
+                   {activeTab === 'customer' && (
+                     <motion.div
+                       key="customer"
+                       initial={{ opacity: 0, x: -20 }}
+                       animate={{ opacity: 1, x: 0 }}
+                       exit={{ opacity: 0, x: 20 }}
+                       transition={{ duration: 0.3 }}
+                       className="space-y-3"
+                     >
+                       <div className="text-center mb-3">
+                         <h3 className="text-lg font-semibold text-cyan-300">👤 Customer Information</h3>
+                         <p className="text-sm text-gray-400">Enter customer details</p>
+                       </div>
+                       
+                       <input
+                         type="text"
+                         value={currentOrder.customerName}
+                         onChange={(e) => setCurrentOrder({...currentOrder, customerName: e.target.value})}
+                         className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 text-base transition-all duration-200"
+                         placeholder="Customer name"
+                         required
+                       />
+                       
+                       <input
+                         type="tel"
+                         value={currentOrder.customerPhone}
+                         onChange={(e) => setCurrentOrder({...currentOrder, customerPhone: e.target.value})}
+                         className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 text-base transition-all duration-200"
+                         placeholder="Phone number"
+                         required
+                       />
+                     </motion.div>
+                   )}
+
+                   {activeTab === 'order' && (
+                     <motion.div
+                       key="order"
+                       initial={{ opacity: 0, x: -20 }}
+                       animate={{ opacity: 1, x: 0 }}
+                       exit={{ opacity: 0, x: 20 }}
+                       transition={{ duration: 0.3 }}
+                       className="space-y-3"
+                     >
+                       <div className="text-center mb-3">
+                         <h3 className="text-lg font-semibold text-green-300">📦 Order Details</h3>
+                         <p className="text-sm text-gray-400">What items to deliver</p>
+                       </div>
+                       
+                       <input
+                         value={currentOrder.items}
+                         onChange={(e) => setCurrentOrder({...currentOrder, items: e.target.value})}
+                         className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 text-base transition-all duration-200"
+                         placeholder="Items to deliver (e.g., Pizza, Burger, Drinks)"
+                         required
+                       />
+                       
+                       <textarea
+                         value={currentOrder.specialInstructions}
+                         onChange={(e) => setCurrentOrder({...currentOrder, specialInstructions: e.target.value})}
+                         className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 text-base resize-none transition-all duration-200"
+                         placeholder="Special instructions (e.g., Extra spicy, No onions)"
+                         rows={2}
+                       />
+                     </motion.div>
+                   )}
+
+                   {activeTab === 'delivery' && (
+                     <motion.div
+                       key="delivery"
+                       initial={{ opacity: 0, x: -20 }}
+                       animate={{ opacity: 1, x: 0 }}
+                       exit={{ opacity: 0, x: 20 }}
+                       transition={{ duration: 0.3 }}
+                       className="space-y-3"
+                     >
+                       <div className="text-center mb-3">
+                         <h3 className="text-lg font-semibold text-fuchsia-300">🚚 Delivery Information</h3>
+                         <p className="text-sm text-gray-400">Where to deliver</p>
+                       </div>
+                       
+                       <input
+                         value={currentOrder.customerAddress}
+                         onChange={(e) => setCurrentOrder({...currentOrder, customerAddress: e.target.value})}
+                         className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/20 text-base transition-all duration-200"
+                         placeholder="Full delivery address"
+                         required
+                       />
+                       
+                       <input
+                         value={currentOrder.customerLocation}
+                         onChange={(e) => setCurrentOrder({...currentOrder, customerLocation: e.target.value})}
+                         className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/20 text-base transition-all duration-200"
+                         placeholder="Area/Landmark (e.g., Near City Mall)"
+                         required
+                       />
+                     </motion.div>
+                   )}
+                 </AnimatePresence>
+
+                 {/* Submit Button */}
                  <div className="pt-2">
                    <motion.button
-                      type="submit"
+                     type="submit"
                      whileHover={{ scale: 1.02 }}
                      whileTap={{ scale: 0.98 }}
-                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-lg font-semibold text-lg shadow-lg"
+                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-lg font-semibold text-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all duration-200"
                    >
                      {editingOrder ? '💾 Save Changes' : '📦 Add Package'}
                    </motion.button>
