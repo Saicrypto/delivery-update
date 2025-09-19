@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
 
 interface StoreOwner {
   id: number;
@@ -101,6 +102,10 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
   // Analytics filtering state
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [storePaymentStatuses, setStorePaymentStatuses] = useState<{[storeId: number]: 'pending' | 'completed'}>({});
+  
+  // Excel download state
+  const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   // Store Management
   const handleAddStore = (e: React.FormEvent) => {
@@ -166,6 +171,63 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
       ...prev,
       [storeId]: status
     }));
+  };
+
+  // Excel download functionality
+  const handleExcelDownload = () => {
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(endDate);
+    
+    // Filter orders within date range
+    const ordersInRange = sharedOrders.filter(order => {
+      const orderDate = new Date(order.timestamp);
+      return orderDate >= startDateObj && orderDate <= endDateObj;
+    });
+
+    // Group orders by date
+    const ordersByDate: {[date: string]: any} = {};
+    
+    ordersInRange.forEach(order => {
+      const orderDate = new Date(order.timestamp).toISOString().split('T')[0];
+      if (!ordersByDate[orderDate]) {
+        ordersByDate[orderDate] = {
+          date: orderDate,
+          totalOrders: 0,
+          pendingOrders: 0,
+          deliveredOrders: 0,
+          paymentStatus: 'pending'
+        };
+      }
+      
+      ordersByDate[orderDate].totalOrders++;
+      if (order.status === 'pending') {
+        ordersByDate[orderDate].pendingOrders++;
+      } else if (order.status === 'delivered') {
+        ordersByDate[orderDate].deliveredOrders++;
+      }
+    });
+
+    // Convert to array and format for Excel
+    const excelData = Object.values(ordersByDate).map((data: any) => ({
+      'Date': data.date,
+      'Total Orders': data.totalOrders,
+      'Pending Orders': data.pendingOrders,
+      'Delivered Orders': data.deliveredOrders,
+      'Payment Status': data.paymentStatus
+    }));
+
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Delivery Analytics');
+
+    // Generate filename with date range
+    const filename = `delivery_analytics_${startDate}_to_${endDate}.xlsx`;
+
+    // Save file
+    XLSX.writeFile(wb, filename);
   };
 
   // Main Dashboard View
@@ -584,6 +646,63 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                   day: 'numeric' 
                 })}
               </span>
+            </div>
+          </div>
+
+          {/* Excel Download */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 mb-8">
+            <h2 className="text-xl font-bold text-white mb-4">📊 Excel Download</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-white font-semibold mb-3">Select Date Range</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <label className="text-white/70 text-sm font-medium w-20">From:</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="px-3 py-2 rounded-lg bg-white/90 border border-gray-300 text-gray-800 text-sm focus:outline-none focus:border-blue-400"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <label className="text-white/70 text-sm font-medium w-20">To:</label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="px-3 py-2 rounded-lg bg-white/90 border border-gray-300 text-gray-800 text-sm focus:outline-none focus:border-blue-400"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-white font-semibold mb-3">Download Options</h3>
+                <div className="space-y-3">
+                  <button
+                    onClick={handleExcelDownload}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+                  >
+                    <span>📥</span>
+                    <span>Download Excel Report</span>
+                  </button>
+                  <p className="text-white/60 text-xs">
+                    Includes: Dates, Order Counts, Delivery Status (Pending/Delivered), Payment Status
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10">
+              <h4 className="text-white font-medium mb-2">📋 Report Contents:</h4>
+              <ul className="text-white/70 text-sm space-y-1">
+                <li>• <strong>Date:</strong> Each day in the selected range</li>
+                <li>• <strong>Total Orders:</strong> Number of orders placed on that date</li>
+                <li>• <strong>Pending Orders:</strong> Orders not yet delivered</li>
+                <li>• <strong>Delivered Orders:</strong> Successfully completed orders</li>
+                <li>• <strong>Payment Status:</strong> Payment completion status</li>
+              </ul>
             </div>
           </div>
 
