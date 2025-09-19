@@ -178,43 +178,74 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
     const startDateObj = new Date(startDate);
     const endDateObj = new Date(endDate);
     
+    // Debug: Log available data
+    console.log('Total sharedOrders:', sharedOrders.length);
+    console.log('Date range:', startDate, 'to', endDate);
+    console.log('Sample orders:', sharedOrders.slice(0, 3));
+    
     // Filter orders within date range
     const ordersInRange = sharedOrders.filter(order => {
       const orderDate = new Date(order.timestamp);
       return orderDate >= startDateObj && orderDate <= endDateObj;
     });
 
-    // Group orders by date
-    const ordersByDate: {[date: string]: any} = {};
-    
-    ordersInRange.forEach(order => {
-      const orderDate = new Date(order.timestamp).toISOString().split('T')[0];
-      if (!ordersByDate[orderDate]) {
-        ordersByDate[orderDate] = {
-          date: orderDate,
-          totalOrders: 0,
-          pendingOrders: 0,
-          deliveredOrders: 0,
-          paymentStatus: 'pending'
-        };
-      }
-      
-      ordersByDate[orderDate].totalOrders++;
-      if (order.status === 'pending') {
-        ordersByDate[orderDate].pendingOrders++;
-      } else if (order.status === 'delivered') {
-        ordersByDate[orderDate].deliveredOrders++;
-      }
-    });
+    console.log('Orders in range:', ordersInRange.length);
 
-    // Convert to array and format for Excel
-    const excelData = Object.values(ordersByDate).map((data: any) => ({
-      'Date': data.date,
-      'Total Orders': data.totalOrders,
-      'Pending Orders': data.pendingOrders,
-      'Delivered Orders': data.deliveredOrders,
-      'Payment Status': data.paymentStatus
-    }));
+    // If no orders in range, create sample data for demonstration
+    let excelData;
+    
+    if (ordersInRange.length === 0) {
+      // Create sample data for the date range
+      const sampleData = [];
+      const currentDate = new Date(startDateObj);
+      
+      while (currentDate <= endDateObj) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        sampleData.push({
+          'Date': dateStr,
+          'Total Orders': 0,
+          'Pending Orders': 0,
+          'Delivered Orders': 0,
+          'Payment Status': 'No Data'
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      excelData = sampleData;
+    } else {
+      // Group orders by date
+      const ordersByDate: {[date: string]: any} = {};
+      
+      ordersInRange.forEach(order => {
+        const orderDate = new Date(order.timestamp).toISOString().split('T')[0];
+        if (!ordersByDate[orderDate]) {
+          ordersByDate[orderDate] = {
+            date: orderDate,
+            totalOrders: 0,
+            pendingOrders: 0,
+            deliveredOrders: 0,
+            paymentStatus: 'pending'
+          };
+        }
+        
+        ordersByDate[orderDate].totalOrders++;
+        if (order.status === 'pending') {
+          ordersByDate[orderDate].pendingOrders++;
+        } else if (order.status === 'delivered') {
+          ordersByDate[orderDate].deliveredOrders++;
+        }
+      });
+
+      // Convert to array and format for Excel
+      excelData = Object.values(ordersByDate).map((data: any) => ({
+        'Date': data.date,
+        'Total Orders': data.totalOrders,
+        'Pending Orders': data.pendingOrders,
+        'Delivered Orders': data.deliveredOrders,
+        'Payment Status': data.paymentStatus
+      }));
+    }
+
+    console.log('Excel data:', excelData);
 
     // Create workbook and worksheet
     const wb = XLSX.utils.book_new();
@@ -228,6 +259,9 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
 
     // Save file
     XLSX.writeFile(wb, filename);
+    
+    // Show alert with data summary
+    alert(`Excel file downloaded!\n\nData Summary:\n- Date Range: ${startDate} to ${endDate}\n- Total Orders Found: ${ordersInRange.length}\n- Rows in Excel: ${excelData.length}`);
   };
 
   // Main Dashboard View
@@ -687,6 +721,35 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                     <span>📥</span>
                     <span>Download Excel Report</span>
                   </button>
+                  <button
+                    onClick={() => {
+                      // Create sample orders for testing
+                      const sampleOrders: any[] = [];
+                      const today = new Date();
+                      
+                      for (let i = 0; i < 5; i++) {
+                        const orderDate = new Date(today);
+                        orderDate.setDate(today.getDate() - i);
+                        
+                        sampleOrders.push({
+                          id: Date.now() + i,
+                          customerName: `Customer ${i + 1}`,
+                          items: `Item ${i + 1}`,
+                          status: i % 2 === 0 ? 'delivered' : 'pending',
+                          timestamp: orderDate,
+                          storeId: 1,
+                          storeName: 'Airavya oils'
+                        });
+                      }
+                      
+                      setSharedOrders(prev => [...prev, ...sampleOrders]);
+                      alert('Sample orders added for testing!');
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 text-sm"
+                  >
+                    <span>🧪</span>
+                    <span>Add Sample Data</span>
+                  </button>
                   <p className="text-white/60 text-xs">
                     Includes: Dates, Order Counts, Delivery Status (Pending/Delivered), Payment Status
                   </p>
@@ -703,6 +766,23 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                 <li>• <strong>Delivered Orders:</strong> Successfully completed orders</li>
                 <li>• <strong>Payment Status:</strong> Payment completion status</li>
               </ul>
+            </div>
+            
+            <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+              <h4 className="text-blue-400 font-medium mb-2">📊 Data Preview:</h4>
+              <div className="text-blue-300 text-sm space-y-1">
+                <p>• <strong>Total Orders Available:</strong> {sharedOrders.length}</p>
+                <p>• <strong>Date Range Selected:</strong> {startDate} to {endDate}</p>
+                <p>• <strong>Orders in Range:</strong> {sharedOrders.filter(order => {
+                  const orderDate = new Date(order.timestamp);
+                  const startDateObj = new Date(startDate);
+                  const endDateObj = new Date(endDate);
+                  return orderDate >= startDateObj && orderDate <= endDateObj;
+                }).length}</p>
+                {sharedOrders.length > 0 && (
+                  <p>• <strong>Sample Order:</strong> {sharedOrders[0].customerName} - {new Date(sharedOrders[0].timestamp).toLocaleDateString()}</p>
+                )}
+              </div>
             </div>
           </div>
 
