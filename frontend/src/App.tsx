@@ -314,6 +314,8 @@ const App: React.FC = () => {
       <DriverDashboard 
         onBackToLogin={clearCredentialsAndLogout}
         driverId={loggedInUserId || undefined}
+        stores={stores}
+        drivers={drivers}
         sharedOrders={sharedOrders}
         setSharedOrders={setSharedOrders}
       />

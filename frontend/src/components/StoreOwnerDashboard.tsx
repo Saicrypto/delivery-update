@@ -211,7 +211,8 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
         items: currentOrder.items,
         specialInstructions: currentOrder.specialInstructions,
         timestamp: new Date(),
-        status: 'pending'
+        status: 'pending',
+        assignedDriverId: currentOrder.assignedDriverId
       };
       setSharedOrders([...sharedOrders, sharedOrder]);
     }
@@ -505,7 +506,8 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
           items: 'Imported order',
           specialInstructions: 'Imported from data',
           timestamp: new Date(),
-          status: 'pending'
+          status: 'pending',
+          assignedDriverId: undefined // Imported orders start unassigned
         }));
         setSharedOrders([...sharedOrders, ...sharedOrdersToAdd]);
       }
@@ -1410,13 +1412,13 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                       required
                     />
                        
-                       <input
-                         value={currentOrder.customerLocation}
-                         onChange={(e) => setCurrentOrder({...currentOrder, customerLocation: e.target.value})}
+                      <input
+                        value={currentOrder.customerLocation}
+                        onChange={(e) => setCurrentOrder({...currentOrder, customerLocation: e.target.value})}
                          className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/20 text-base transition-all duration-200"
                          placeholder="Area/Landmark (e.g., Near City Mall)"
-                         required
-                       />
+                      required
+                    />
                        
                        {/* Driver Assignment */}
                        <div className="mt-4">
