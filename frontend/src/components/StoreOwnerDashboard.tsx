@@ -9,6 +9,7 @@ interface Order {
   customerLocation: string;
   items: string;
   specialInstructions: string;
+  assignedDriverId?: number;
   timestamp?: Date;
 }
 
@@ -27,9 +28,29 @@ interface SharedOrder {
   assignedDriverId?: number;
 }
 
+interface Store {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  ownerId?: number;
+  createdAt: Date;
+}
+
+interface Driver {
+  id: number;
+  username: string;
+  password: string;
+  email: string;
+  phoneNumber: string;
+  createdAt: Date;
+}
+
 interface StoreOwnerDashboardProps {
   onBackToLogin?: () => void;
   storeOwnerId?: number;
+  stores?: Store[];
+  drivers?: Driver[];
   sharedOrders?: SharedOrder[];
   setSharedOrders?: React.Dispatch<React.SetStateAction<SharedOrder[]>>;
   receivingAccount?: any;
@@ -41,10 +62,13 @@ interface StoreOwnerDashboardProps {
 const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({ 
   onBackToLogin, 
   storeOwnerId,
+  stores = [],
+  drivers = [],
   sharedOrders = [],
   setSharedOrders
 }) => {
-  const [step, setStep] = useState<'cart' | 'adding' | 'dispatching' | 'tracking' | 'orders-list' | 'live-tracking' | 'data-import'>('cart');
+  const [step, setStep] = useState<'store-selection' | 'cart' | 'adding' | 'dispatching' | 'tracking' | 'orders-list' | 'live-tracking' | 'data-import'>('store-selection');
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [currentOrder, setCurrentOrder] = useState<Order>({
@@ -54,7 +78,8 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
     customerAddress: '',
     customerLocation: '',
     items: '',
-    specialInstructions: ''
+    specialInstructions: '',
+    assignedDriverId: undefined
   });
   const [showMenu, setShowMenu] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -93,7 +118,8 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
     customerAddress: '',
     customerLocation: '',
     items: '',
-    specialInstructions: ''
+    specialInstructions: '',
+    assignedDriverId: undefined
   });
 
   // Handle scroll for parallax effect
@@ -152,7 +178,8 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
         customerAddress: '',
         customerLocation: '',
         items: '',
-        specialInstructions: ''
+        specialInstructions: '',
+        assignedDriverId: undefined
       });
       window.location.reload();
     }
@@ -276,7 +303,8 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
         customerAddress: '',
         customerLocation: '',
         items: '',
-        specialInstructions: ''
+        specialInstructions: '',
+        assignedDriverId: undefined
       });
       setStep('orders-list');
     }
@@ -719,6 +747,67 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
               <div className="text-center text-white/70 py-12">
                 <p className="text-xl">No orders yet</p>
                 <p className="text-sm mt-2">Add some orders to see them here</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Store Selection View
+  if (step === 'store-selection') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-white">Select Store</h1>
+            <button
+              onClick={onBackToLogin}
+              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm border border-white/20"
+            >
+              ← Back to Login
+            </button>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
+            <h2 className="text-xl font-bold text-white mb-6 text-center">🏪 Choose Your Store</h2>
+            <p className="text-white/70 text-center mb-8">Select the store you want to manage orders for</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {stores.map(store => (
+                <button
+                  key={store.id}
+                  onClick={() => {
+                    setSelectedStore(store);
+                    setStep('cart');
+                  }}
+                  className="bg-white/5 hover:bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10 transition-all duration-200 text-left group hover:scale-105 hover:shadow-lg"
+                >
+                  <div className="text-4xl mb-4 text-center">🏪</div>
+                  <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-300">{store.name}</h3>
+                  <p className="text-white/70 text-sm mb-2">📍 {store.address}</p>
+                  <p className="text-white/70 text-sm mb-2">📞 {store.phone}</p>
+                  <div className="text-center mt-4">
+                    <span className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                      Select Store
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {stores.length === 0 && (
+              <div className="text-center py-12 text-white/50">
+                <div className="text-6xl mb-4">🏪</div>
+                <h3 className="text-xl font-semibold mb-2">No Stores Available</h3>
+                <p className="mb-4">No stores have been added yet. Please contact the developer to add stores.</p>
+                <button
+                  onClick={onBackToLogin}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
+                >
+                  Back to Login
+                </button>
               </div>
             )}
           </div>
@@ -1179,7 +1268,7 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                    📦 Package #{orders.length + 1}
                  </h2>
                  <div className="text-cyan-300 font-medium text-sm">
-                   Store: {storeOwnerId ? `#${storeOwnerId}` : 'Default'} 
+                   Store: {selectedStore ? selectedStore.name : (storeOwnerId ? `#${storeOwnerId}` : 'Default')} 
                       </div>
                       </div>
                {/* Launch marker for flying animation */}
@@ -1247,23 +1336,23 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                          <p className="text-sm text-gray-400">Enter customer details</p>
                        </div>
                        
-                       <input
-                         type="text"
-                         value={currentOrder.customerName}
-                         onChange={(e) => setCurrentOrder({...currentOrder, customerName: e.target.value})}
+                    <input
+                      type="text"
+                      value={currentOrder.customerName}
+                      onChange={(e) => setCurrentOrder({...currentOrder, customerName: e.target.value})}
                          className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 text-base transition-all duration-200"
-                         placeholder="Customer name"
-                         required
-                       />
+                   placeholder="Customer name"
+                      required
+                    />
                        
-                       <input
-                         type="tel"
-                         value={currentOrder.customerPhone}
-                         onChange={(e) => setCurrentOrder({...currentOrder, customerPhone: e.target.value})}
+                    <input
+                      type="tel"
+                      value={currentOrder.customerPhone}
+                      onChange={(e) => setCurrentOrder({...currentOrder, customerPhone: e.target.value})}
                          className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 text-base transition-all duration-200"
-                         placeholder="Phone number"
-                         required
-                       />
+                   placeholder="Phone number"
+                      required
+                    />
                      </motion.div>
                    )}
 
@@ -1313,13 +1402,13 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                          <p className="text-sm text-gray-400">Where to deliver</p>
                        </div>
                        
-                       <input
-                         value={currentOrder.customerAddress}
-                         onChange={(e) => setCurrentOrder({...currentOrder, customerAddress: e.target.value})}
+                                      <input
+                      value={currentOrder.customerAddress}
+                      onChange={(e) => setCurrentOrder({...currentOrder, customerAddress: e.target.value})}
                          className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/20 text-base transition-all duration-200"
                          placeholder="Full delivery address"
-                         required
-                       />
+                      required
+                    />
                        
                        <input
                          value={currentOrder.customerLocation}
@@ -1328,6 +1417,28 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                          placeholder="Area/Landmark (e.g., Near City Mall)"
                          required
                        />
+                       
+                       {/* Driver Assignment */}
+                       <div className="mt-4">
+                         <label className="block text-fuchsia-300 font-medium mb-2">🚚 Assign Delivery To</label>
+                         <select
+                           value={currentOrder.assignedDriverId || ''}
+                           onChange={(e) => setCurrentOrder({...currentOrder, assignedDriverId: e.target.value ? parseInt(e.target.value) : undefined})}
+                           className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white focus:outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/20 text-base transition-all duration-200"
+                         >
+                           <option value="">Select Driver (Optional)</option>
+                           {drivers.map(driver => (
+                             <option key={driver.id} value={driver.id} className="bg-gray-800">
+                               {driver.username} - {driver.phoneNumber}
+                             </option>
+                           ))}
+                         </select>
+                         {currentOrder.assignedDriverId && (
+                           <p className="text-fuchsia-300 text-sm mt-2">
+                             ✓ Assigned to: {drivers.find(d => d.id === currentOrder.assignedDriverId)?.username}
+                           </p>
+                         )}
+                       </div>
                      </motion.div>
                    )}
                  </AnimatePresence>
@@ -1335,7 +1446,7 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                  {/* Submit Button */}
                  <div className="pt-2">
                    <motion.button
-                     type="submit"
+                      type="submit"
                      whileHover={{ scale: 1.02 }}
                      whileTap={{ scale: 0.98 }}
                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-lg font-semibold text-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all duration-200"

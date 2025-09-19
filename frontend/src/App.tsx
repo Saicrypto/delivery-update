@@ -21,6 +21,15 @@ interface Driver {
   createdAt: Date;
 }
 
+interface Store {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  ownerId?: number;
+  createdAt: Date;
+}
+
 interface SharedOrder {
   id: number;
   storeOwnerId: number;
@@ -60,6 +69,7 @@ const App: React.FC = () => {
   // Shared state for created accounts and orders
   const [storeOwners, setStoreOwners] = useState<StoreOwner[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
   const [sharedOrders, setSharedOrders] = useState<SharedOrder[]>([]);
   
   // Shared receiving account for payments
@@ -265,6 +275,8 @@ const App: React.FC = () => {
             setStoreOwners={setStoreOwners}
             drivers={drivers}
             setDrivers={setDrivers}
+            stores={stores}
+            setStores={setStores}
             sharedOrders={sharedOrders}
             setSharedOrders={setSharedOrders}
             receivingAccount={receivingAccount}
@@ -284,6 +296,8 @@ const App: React.FC = () => {
       <StoreOwnerDashboard 
         onBackToLogin={clearCredentialsAndLogout}
         storeOwnerId={loggedInUserId || undefined}
+        stores={stores}
+        drivers={drivers}
         sharedOrders={sharedOrders}
         setSharedOrders={setSharedOrders}
         receivingAccount={receivingAccount}

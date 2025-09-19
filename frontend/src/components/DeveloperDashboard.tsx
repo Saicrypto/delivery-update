@@ -23,6 +23,15 @@ interface ItemType {
   name: string;
 }
 
+interface Store {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  ownerId?: number;
+  createdAt: Date;
+}
+
 interface SharedOrder {
   id: number;
   storeOwnerId: number;
@@ -44,6 +53,8 @@ interface DeveloperDashboardProps {
   setStoreOwners: React.Dispatch<React.SetStateAction<StoreOwner[]>>;
   drivers: Driver[];
   setDrivers: React.Dispatch<React.SetStateAction<Driver[]>>;
+  stores: Store[];
+  setStores: React.Dispatch<React.SetStateAction<Store[]>>;
   sharedOrders: SharedOrder[];
   setSharedOrders: React.Dispatch<React.SetStateAction<SharedOrder[]>>;
   receivingAccount?: any;
@@ -61,6 +72,8 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
   setStoreOwners, 
   drivers, 
   setDrivers,
+  stores,
+  setStores,
   sharedOrders,
   setSharedOrders,
   receivingAccount,
@@ -71,7 +84,14 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
   setPaymentData,
   setStoreOwnerBills
 }) => {
-  const [currentView, setCurrentView] = useState<'main' | 'manage-stores' | 'manage-drivers' | 'assign-deliveries'>('main');
+  const [currentView, setCurrentView] = useState<'main' | 'manage-store-owners' | 'manage-stores' | 'manage-drivers' | 'assign-deliveries'>('main');
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [newStore, setNewStore] = useState<Omit<Store, 'id' | 'createdAt'>>({
+    name: '',
+    address: '',
+    phone: '',
+    ownerId: undefined
+  });
   const [selectedStoreOwner, setSelectedStoreOwner] = useState<StoreOwner | null>(null);
   const [itemTypes, setItemTypes] = useState<ItemType[]>([
     { id: 1, name: 'Pizza' },
@@ -216,6 +236,35 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
     }
   };
 
+  // Store Management
+  const handleAddStore = (e: React.FormEvent) => {
+    e.preventDefault();
+    const store: Store = {
+      id: stores.length + 1,
+      ...newStore,
+      createdAt: new Date()
+    };
+    setStores([...stores, store]);
+    setNewStore({ name: '', address: '', phone: '', ownerId: undefined });
+  };
+
+  const handleUpdateStore = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingStore) {
+      setStores(stores.map(store => 
+        store.id === editingStore.id 
+          ? { ...store, ...newStore }
+          : store
+      ));
+      setEditingStore(null);
+      setNewStore({ name: '', address: '', phone: '', ownerId: undefined });
+    }
+  };
+
+  const handleDeleteStore = (id: number) => {
+    setStores(stores.filter(store => store.id !== id));
+  };
+
   // Main Dashboard View
   if (currentView === 'main') {
     return (
@@ -254,10 +303,10 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
           {/* Management Options */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <button
-              onClick={() => setCurrentView('manage-stores')}
+              onClick={() => setCurrentView('manage-store-owners')}
               className="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl p-8 border border-white/20 transition-all duration-200 text-left group"
             >
-              <div className="text-4xl mb-4">🏪</div>
+              <div className="text-4xl mb-4">👥</div>
               <h3 className="text-xl font-bold text-white mb-2 group-hover:text-gray-200">Manage Store Owners</h3>
               <p className="text-white/70">Create, edit, and manage store owner accounts. Assign item types to stores.</p>
             </button>
@@ -269,6 +318,15 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
               <div className="text-4xl mb-4">🚚</div>
               <h3 className="text-xl font-bold text-white mb-2 group-hover:text-gray-200">Manage Drivers</h3>
               <p className="text-white/70">Create, edit, and manage driver accounts. View driver information and status.</p>
+            </button>
+
+            <button
+              onClick={() => setCurrentView('manage-stores')}
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl p-8 border border-white/20 transition-all duration-200 text-left group"
+            >
+              <div className="text-4xl mb-4">🏪</div>
+              <h3 className="text-xl font-bold text-white mb-2 group-hover:text-gray-200">Manage Stores</h3>
+              <p className="text-white/70">Create, edit, and manage store locations and information.</p>
             </button>
 
             <button
@@ -293,7 +351,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
   }
 
   // Store Owners Management View
-  if (currentView === 'manage-stores') {
+  if (currentView === 'manage-store-owners') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-6">
         <div className="max-w-6xl mx-auto">
@@ -487,7 +545,144 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
     );
   }
 
-  // Drivers Management View
+  // Store Management View
+  if (currentView === 'manage-stores') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-white">Manage Stores</h1>
+            <button
+              onClick={() => setCurrentView('main')}
+              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm border border-white/20"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+
+          {/* Add Store Form */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8 border border-white/20">
+            <h2 className="text-xl font-bold text-white mb-4">
+              {editingStore ? 'Edit Store' : 'Add New Store'}
+            </h2>
+            <form onSubmit={editingStore ? handleUpdateStore : handleAddStore} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Store Name"
+                value={newStore.name}
+                onChange={(e) => setNewStore({...newStore, name: e.target.value})}
+                className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-blue-400"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Store Address"
+                value={newStore.address}
+                onChange={(e) => setNewStore({...newStore, address: e.target.value})}
+                className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-blue-400"
+                required
+              />
+              <input
+                type="tel"
+                placeholder="Store Phone"
+                value={newStore.phone}
+                onChange={(e) => setNewStore({...newStore, phone: e.target.value})}
+                className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-blue-400"
+                required
+              />
+              <select
+                value={newStore.ownerId || ''}
+                onChange={(e) => setNewStore({...newStore, ownerId: e.target.value ? parseInt(e.target.value) : undefined})}
+                className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-blue-400"
+              >
+                <option value="">Select Store Owner (Optional)</option>
+                {storeOwners.map(owner => (
+                  <option key={owner.id} value={owner.id} className="bg-gray-800">
+                    {owner.username}
+                  </option>
+                ))}
+              </select>
+              <div className="md:col-span-2 flex gap-4">
+                <button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
+                >
+                  {editingStore ? 'Update Store' : 'Add Store'}
+                </button>
+                {editingStore && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingStore(null);
+                      setNewStore({ name: '', address: '', phone: '', ownerId: undefined });
+                    }}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          {/* Stores List */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <h2 className="text-xl font-bold text-white mb-4">Stores ({stores.length})</h2>
+            <div className="space-y-4">
+              {stores.map(store => (
+                <div key={store.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-white">{store.name}</h3>
+                      <p className="text-white/70 text-sm mt-1">📍 {store.address}</p>
+                      <p className="text-white/70 text-sm">📞 {store.phone}</p>
+                      {store.ownerId && (
+                        <p className="text-blue-300 text-sm mt-1">
+                          👤 Owner: {storeOwners.find(owner => owner.id === store.ownerId)?.username || 'Unknown'}
+                        </p>
+                      )}
+                      <p className="text-white/50 text-xs mt-2">
+                        Created: {store.createdAt.toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 ml-4">
+                      <button
+                        onClick={() => {
+                          setEditingStore(store);
+                          setNewStore({
+                            name: store.name,
+                            address: store.address,
+                            phone: store.phone,
+                            ownerId: store.ownerId
+                          });
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteStore(store.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {stores.length === 0 && (
+                <div className="text-center py-8 text-white/50">
+                  <div className="text-4xl mb-4">🏪</div>
+                  <p>No stores added yet. Create your first store above!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (currentView === 'manage-drivers') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-6">
@@ -767,7 +962,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                   You need to create store owner accounts first before you can assign deliveries.
                 </p>
                 <button
-                  onClick={() => setCurrentView('manage-stores')}
+                  onClick={() => setCurrentView('manage-store-owners')}
                   className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm border border-white/30"
                 >
                   Create Store Owners
