@@ -46,6 +46,13 @@ interface Driver {
   createdAt: Date;
 }
 
+interface StockItem {
+  id: number;
+  name: string;
+  quantity: number;
+  storeId: number;
+}
+
 interface StoreOwnerDashboardProps {
   onBackToLogin?: () => void;
   storeOwnerId?: number;
@@ -57,6 +64,8 @@ interface StoreOwnerDashboardProps {
   globalRate?: number;
   paymentData?: any;
   storeOwnerBills?: any;
+  airavyaStock?: StockItem[];
+  setAiravyaStock?: React.Dispatch<React.SetStateAction<StockItem[]>>;
 }
 
 const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({ 
@@ -65,7 +74,9 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
   stores = [],
   drivers = [],
   sharedOrders = [],
-  setSharedOrders
+  setSharedOrders,
+  airavyaStock = [],
+  setAiravyaStock
 }) => {
   const [step, setStep] = useState<'store-selection' | 'cart' | 'adding' | 'dispatching' | 'tracking' | 'orders-list' | 'live-tracking' | 'data-import'>('store-selection');
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
@@ -91,6 +102,11 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
   const [importData, setImportData] = useState('');
   const [isProcessingImport, setIsProcessingImport] = useState(false);
   const [activeTab, setActiveTab] = useState<'customer' | 'order' | 'delivery'>('customer');
+  
+  // Stock management state for Airavya oils
+  const [showStockManagement, setShowStockManagement] = useState(false);
+  const [selectedOil, setSelectedOil] = useState<string>('');
+  const [oilQuantity, setOilQuantity] = useState<number>(1);
 
   // Derived: shared orders belonging to this store owner only
   const ownerSharedOrders = storeOwnerId
@@ -167,10 +183,11 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
     if (onBackToLogin) {
       onBackToLogin();
     } else {
-      setStep('cart');
+      setStep('store-selection');
       setCartOpen(false);
       setHasDispatched(false);
       setOrders([]);
+      setSelectedStore(null);
       setCurrentOrder({
         id: 0,
         customerName: '',
@@ -181,11 +198,25 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
         specialInstructions: '',
         assignedDriverId: undefined
       });
-      window.location.reload();
     }
   };
 
+  // Stock management functions for Airavya oils
+  const handleStockUpdate = (itemId: number, newQuantity: number) => {
+    if (setAiravyaStock) {
+      setAiravyaStock(prev => prev.map(item => 
+        item.id === itemId ? { ...item, quantity: newQuantity } : item
+      ));
+    }
+  };
 
+  const handleStockDeduction = (oilName: string, quantity: number) => {
+    if (setAiravyaStock) {
+      setAiravyaStock(prev => prev.map(item => 
+        item.name === oilName ? { ...item, quantity: Math.max(0, item.quantity - quantity) } : item
+      ));
+    }
+  };
 
   const handleAddOrder = (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,6 +228,11 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
       timestamp: new Date()
     };
     setOrders([...orders, newOrder]);
+    
+    // Deduct stock for Airavya oils if oil is selected
+    if (selectedStore?.name === 'Airavya oils' && selectedOil && oilQuantity > 0) {
+      handleStockDeduction(selectedOil, oilQuantity);
+    }
     
     // Also add to shared orders for global sync
     if (setSharedOrders && storeOwnerId) {
@@ -909,15 +945,27 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                   >
                     📍 Track Orders
                   </button>
-                  <button
-                    onClick={() => {
-                      setStep('data-import');
-                      setShowMenu(false);
-                    }}
-                    className="w-full text-left px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-all duration-200"
-                  >
-                    📋 Import Customer Data
-                  </button>
+                  {selectedStore?.name === 'Airavya oils' ? (
+                    <button
+                      onClick={() => {
+                        setShowStockManagement(true);
+                        setShowMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-all duration-200"
+                    >
+                      📦 Stock Management
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setStep('data-import');
+                        setShowMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-all duration-200"
+                    >
+                      📋 Import Customer Data
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -953,11 +1001,20 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                 
                 <div className="bg-white/5 rounded-lg p-4 mt-6 border border-white/10">
                   <h3 className="font-bold text-white mb-3">📦 Dispatched Orders:</h3>
-                  {(storeOwnerId ? ownerSharedOrders : orders).map((order, index) => (
-                    <div key={order.id} className="text-sm text-white/80 mb-2">
-                      #{index + 1} {order.customerName} - {order.items}
-                    </div>
-                  ))}
+                  {(storeOwnerId ? ownerSharedOrders : orders)
+                    .filter(order => {
+                      // For shared orders, check if they belong to the selected store
+                      if (storeOwnerId && 'storeOwnerId' in order) {
+                        return order.storeOwnerId === storeOwnerId;
+                      }
+                      // For local orders, show all (they're already filtered by store selection)
+                      return true;
+                    })
+                    .map((order, index) => (
+                      <div key={order.id} className="text-sm text-white/80 mb-2">
+                        #{index + 1} {order.customerName} - {order.items}
+                      </div>
+                    ))}
                 </div>
                 
                 <div className="flex space-x-4 justify-center mt-6">
@@ -1372,13 +1429,45 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                          <p className="text-sm text-gray-400">What items to deliver</p>
                        </div>
                        
-                       <input
-                         value={currentOrder.items}
-                         onChange={(e) => setCurrentOrder({...currentOrder, items: e.target.value})}
-                         className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 text-base transition-all duration-200"
-                         placeholder="Items to deliver (e.g., Pizza, Burger, Drinks)"
-                         required
-                       />
+                       {selectedStore?.name === 'Airavya oils' ? (
+                         <div className="space-y-3">
+                           <select
+                             value={selectedOil}
+                             onChange={(e) => {
+                               setSelectedOil(e.target.value);
+                               setCurrentOrder({...currentOrder, items: e.target.value});
+                             }}
+                             className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 text-base transition-all duration-200"
+                             required
+                           >
+                             <option value="">Select Oil</option>
+                             {airavyaStock.map(oil => (
+                               <option key={oil.id} value={oil.name} className="bg-gray-800">
+                                 {oil.name} (Stock: {oil.quantity})
+                               </option>
+                             ))}
+                           </select>
+                           
+                           <input
+                             type="number"
+                             min="1"
+                             max={airavyaStock.find(oil => oil.name === selectedOil)?.quantity || 1}
+                             value={oilQuantity}
+                             onChange={(e) => setOilQuantity(parseInt(e.target.value) || 1)}
+                             className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 text-base transition-all duration-200"
+                             placeholder="Quantity"
+                             required
+                           />
+                         </div>
+                       ) : (
+                         <input
+                           value={currentOrder.items}
+                           onChange={(e) => setCurrentOrder({...currentOrder, items: e.target.value})}
+                           className="w-full px-3 py-3 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 text-base transition-all duration-200"
+                           placeholder="Items to deliver (e.g., Pizza, Burger, Drinks)"
+                           required
+                         />
+                       )}
                        
                        <textarea
                          value={currentOrder.specialInstructions}
@@ -1514,6 +1603,91 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
               📦 Packing {orders.length} Orders...
             </h2>
             <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto"></div>
+          </div>
+        )}
+
+        {/* Stock Management Modal for Airavya oils */}
+        {showStockManagement && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-gray-900 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-white/20"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">📦 Stock Management - Airavya oils</h2>
+                <button
+                  onClick={() => setShowStockManagement(false)}
+                  className="text-white/70 hover:text-white text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {airavyaStock.map((item) => (
+                  <div key={item.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="text-white font-semibold capitalize">{item.name}</h3>
+                        <p className="text-white/70 text-sm">Current Stock: {item.quantity}</p>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => handleStockUpdate(item.id, Math.max(0, item.quantity - 1))}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200"
+                        >
+                          -1
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          value={item.quantity}
+                          onChange={(e) => handleStockUpdate(item.id, parseInt(e.target.value) || 0)}
+                          className="w-16 px-2 py-1 rounded-lg bg-gray-800/70 border border-white/10 text-white text-center text-sm focus:outline-none focus:border-blue-400"
+                        />
+                        <button
+                          onClick={() => handleStockUpdate(item.id, item.quantity + 1)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200"
+                        >
+                          +1
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <h3 className="text-white font-semibold mb-3">➕ Add New Oil</h3>
+                  <div className="flex space-x-3">
+                    <input
+                      type="text"
+                      placeholder="Oil name"
+                      className="flex-1 px-3 py-2 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-blue-400"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Quantity"
+                      className="w-20 px-3 py-2 rounded-lg bg-gray-800/70 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-blue-400"
+                    />
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200">
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setShowStockManagement(false)}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
       </div>

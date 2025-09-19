@@ -30,6 +30,13 @@ interface Store {
   createdAt: Date;
 }
 
+interface StockItem {
+  id: number;
+  name: string;
+  quantity: number;
+  storeId: number;
+}
+
 interface SharedOrder {
   id: number;
   storeOwnerId: number;
@@ -69,7 +76,32 @@ const App: React.FC = () => {
   // Shared state for created accounts and orders
   const [storeOwners, setStoreOwners] = useState<StoreOwner[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [stores, setStores] = useState<Store[]>([]);
+  const [stores, setStores] = useState<Store[]>([
+    {
+      id: 1,
+      name: 'Airavya oils',
+      address: '123 Oil Street, Mumbai',
+      phone: '+91 98765 43210',
+      ownerId: undefined,
+      createdAt: new Date()
+    },
+    {
+      id: 2,
+      name: 'Irie salad',
+      address: '456 Salad Lane, Delhi',
+      phone: '+91 98765 43211',
+      ownerId: undefined,
+      createdAt: new Date()
+    },
+    {
+      id: 3,
+      name: 'Wild berry organics',
+      address: '789 Berry Road, Bangalore',
+      phone: '+91 98765 43212',
+      ownerId: undefined,
+      createdAt: new Date()
+    }
+  ]);
   const [sharedOrders, setSharedOrders] = useState<SharedOrder[]>([]);
   
   // Shared receiving account for payments
@@ -79,6 +111,16 @@ const App: React.FC = () => {
   const [globalRate, setGlobalRate] = useState(400.0);
   const [paymentData, setPaymentData] = useState<{[key: number]: {orderCount: number, ratePerOrder: number, total: number}}>({});
   const [storeOwnerBills, setStoreOwnerBills] = useState<Record<number, StoreOwnerBill[]>>({});
+  
+  // Stock management for Airavya oils (store ID 1)
+  const [airavyaStock, setAiravyaStock] = useState<StockItem[]>([
+    { id: 1, name: 'groundnut oil', quantity: 50, storeId: 1 },
+    { id: 2, name: 'coconut oil', quantity: 30, storeId: 1 },
+    { id: 3, name: 'white sesame oil', quantity: 25, storeId: 1 },
+    { id: 4, name: 'black sesame oil', quantity: 20, storeId: 1 },
+    { id: 5, name: 'sunflower oil', quantity: 40, storeId: 1 },
+    { id: 6, name: 'safflower', quantity: 15, storeId: 1 }
+  ]);
 
   const roleConfig = {
     developer: {
@@ -304,6 +346,8 @@ const App: React.FC = () => {
         globalRate={globalRate}
         paymentData={paymentData}
         storeOwnerBills={storeOwnerBills}
+        airavyaStock={airavyaStock}
+        setAiravyaStock={setAiravyaStock}
       />
     );
   }
