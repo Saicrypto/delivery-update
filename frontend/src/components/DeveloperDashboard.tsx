@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import * as XLSX from 'xlsx';
 
 interface StoreOwner {
   id: number;
@@ -64,11 +63,11 @@ interface DeveloperDashboardProps {
   setStoreOwnerBills: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
-const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
-  onBackToLogin,
-  storeOwners,
-  setStoreOwners,
-  drivers,
+const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({ 
+  onBackToLogin, 
+  storeOwners, 
+  setStoreOwners, 
+  drivers, 
   setDrivers,
   stores,
   setStores,
@@ -173,8 +172,33 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
     }));
   };
 
-  // Excel download functionality
-  const handleExcelDownload = () => {
+  // CSV download functionality for Google Sheets
+  const convertToCSV = (data: any[]) => {
+    if (data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csvRows = [];
+    
+    // Add headers
+    csvRows.push(headers.join(','));
+    
+    // Add data rows
+    data.forEach(row => {
+      const values = headers.map(header => {
+        const value = row[header];
+        // Escape commas and quotes in values
+        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      });
+      csvRows.push(values.join(','));
+    });
+    
+    return csvRows.join('\n');
+  };
+
+  const handleCSVDownload = () => {
     const startDateObj = new Date(startDate);
     const endDateObj = new Date(endDate);
     
@@ -192,7 +216,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
     console.log('Orders in range:', ordersInRange.length);
 
     // If no orders in range, create sample data for demonstration
-    let excelData;
+    let csvData;
     
     if (ordersInRange.length === 0) {
       // Create sample data for the date range
@@ -210,7 +234,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
         });
         currentDate.setDate(currentDate.getDate() + 1);
       }
-      excelData = sampleData;
+      csvData = sampleData;
     } else {
       // Group orders by date
       const ordersByDate: {[date: string]: any} = {};
@@ -235,8 +259,8 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
         }
       });
 
-      // Convert to array and format for Excel
-      excelData = Object.values(ordersByDate).map((data: any) => ({
+      // Convert to array and format for CSV
+      csvData = Object.values(ordersByDate).map((data: any) => ({
         'Date': data.date,
         'Total Orders': data.totalOrders,
         'Pending Orders': data.pendingOrders,
@@ -245,23 +269,27 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
       }));
     }
 
-    console.log('Excel data:', excelData);
+    console.log('CSV data:', csvData);
 
-    // Create workbook and worksheet
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(excelData);
-
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'Delivery Analytics');
+    // Convert to CSV format for Google Sheets
+    const csvContent = convertToCSV(csvData);
 
     // Generate filename with date range
-    const filename = `delivery_analytics_${startDate}_to_${endDate}.xlsx`;
+    const filename = `delivery_analytics_${startDate}_to_${endDate}.csv`;
 
-    // Save file
-    XLSX.writeFile(wb, filename);
+    // Create and download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     
     // Show alert with data summary
-    alert(`Excel file downloaded!\n\nData Summary:\n- Date Range: ${startDate} to ${endDate}\n- Total Orders Found: ${ordersInRange.length}\n- Rows in Excel: ${excelData.length}`);
+    alert(`CSV file downloaded!\n\nData Summary:\n- Date Range: ${startDate} to ${endDate}\n- Total Orders Found: ${ordersInRange.length}\n- Rows in CSV: ${csvData.length}\n\nYou can now import this CSV file into Google Sheets!`);
   };
 
   // Main Dashboard View
@@ -359,32 +387,32 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8 border border-white/20">
             <h2 className="text-xl font-bold text-white mb-4">
               {editingStore ? 'Edit Store' : 'Add New Store'}
-            </h2>
+              </h2>
             <form onSubmit={editingStore ? handleUpdateStore : handleAddStore} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
+                <input
+                  type="text"
                 placeholder="Store Name"
                 value={newStore.name}
                 onChange={(e) => setNewStore({...newStore, name: e.target.value})}
                 className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-blue-400"
-                required
-              />
-              <input
+                  required
+                />
+                <input
                 type="text"
                 placeholder="Store Address"
                 value={newStore.address}
                 onChange={(e) => setNewStore({...newStore, address: e.target.value})}
                 className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-blue-400"
-                required
-              />
-              <input
+                  required
+                />
+                <input
                 type="tel"
                 placeholder="Store Phone"
                 value={newStore.phone}
                 onChange={(e) => setNewStore({...newStore, phone: e.target.value})}
                 className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-blue-400"
-                required
-              />
+                  required
+                />
               <select
                 value={newStore.ownerId || ''}
                 onChange={(e) => setNewStore({...newStore, ownerId: e.target.value ? parseInt(e.target.value) : undefined})}
@@ -398,30 +426,30 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                 ))}
               </select>
               <div className="md:col-span-2 flex gap-4">
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
-                >
-                  {editingStore ? 'Update Store' : 'Add Store'}
-                </button>
-                {editingStore && (
                   <button
-                    type="button"
-                    onClick={() => {
+                    type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
+                  >
+                  {editingStore ? 'Update Store' : 'Add Store'}
+                  </button>
+                {editingStore && (
+                    <button
+                      type="button"
+                      onClick={() => {
                       setEditingStore(null);
                       setNewStore({ name: '', address: '', phone: '', ownerId: undefined });
-                    }}
+                      }}
                     className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
 
           {/* Stores List */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
             <h2 className="text-xl font-bold text-white mb-4">Stores ({stores.length})</h2>
             <div className="space-y-4">
               {stores.map(store => (
@@ -439,9 +467,9 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                       <p className="text-white/50 text-xs mt-2">
                         Created: {store.createdAt.toLocaleDateString()}
                       </p>
-                    </div>
+                      </div>
                     <div className="flex gap-2 ml-4">
-                      <button
+                        <button
                         onClick={() => {
                           setEditingStore(store);
                           setNewStore({
@@ -454,25 +482,25 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                         className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                       >
                         Edit
-                      </button>
-                      <button
+                        </button>
+                        <button
                         onClick={() => handleDeleteStore(store.id)}
                         className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                       >
                         Delete
-                      </button>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                    </div>
               ))}
               {stores.length === 0 && (
                 <div className="text-center py-8 text-white/50">
                   <div className="text-4xl mb-4">🏪</div>
                   <p>No stores added yet. Create your first store above!</p>
-                </div>
-              )}
-            </div>
-          </div>
+                      </div>
+                    )}
+                        </div>
+                      </div>
         </div>
       </div>
     );
@@ -647,19 +675,19 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const recentOrders = sharedOrders.filter(order => order.timestamp >= sevenDaysAgo);
     
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-6">
+      
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-white">System Analytics</h1>
-            <button
+              <button
               onClick={() => setCurrentView('main')}
-              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm border border-white/20"
-            >
+                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm border border-white/20"
+              >
               ← Back to Dashboard
-            </button>
-          </div>
+              </button>
+            </div>
 
           {/* Date Filter */}
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 mb-8">
@@ -680,14 +708,14 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                   day: 'numeric' 
                 })}
               </span>
-            </div>
-          </div>
-
-          {/* Excel Download */}
+                </div>
+              </div>
+              
+          {/* CSV Download for Google Sheets */}
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 mb-8">
-            <h2 className="text-xl font-bold text-white mb-4">📊 Excel Download</h2>
+            <h2 className="text-xl font-bold text-white mb-4">📊 Google Sheets Download</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+                        <div>
                 <h3 className="text-white font-semibold mb-3">Select Date Range</h3>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
@@ -698,7 +726,7 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                       onChange={(e) => setStartDate(e.target.value)}
                       className="px-3 py-2 rounded-lg bg-white/90 border border-gray-300 text-gray-800 text-sm focus:outline-none focus:border-blue-400"
                     />
-                  </div>
+                          </div>
                   <div className="flex items-center space-x-3">
                     <label className="text-white/70 text-sm font-medium w-20">To:</label>
                     <input
@@ -707,19 +735,19 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                       onChange={(e) => setEndDate(e.target.value)}
                       className="px-3 py-2 rounded-lg bg-white/90 border border-gray-300 text-gray-800 text-sm focus:outline-none focus:border-blue-400"
                     />
-                  </div>
-                </div>
+                        </div>
+                          </div>
               </div>
               
               <div>
                 <h3 className="text-white font-semibold mb-3">Download Options</h3>
                 <div className="space-y-3">
                   <button
-                    onClick={handleExcelDownload}
+                    onClick={handleCSVDownload}
                     className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
                   >
                     <span>📥</span>
-                    <span>Download Excel Report</span>
+                    <span>Download CSV for Google Sheets</span>
                   </button>
                   <button
                     onClick={() => {
@@ -751,14 +779,14 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                     <span>Add Sample Data</span>
                   </button>
                   <p className="text-white/60 text-xs">
-                    Includes: Dates, Order Counts, Delivery Status (Pending/Delivered), Payment Status
+                    Downloads CSV file compatible with Google Sheets. Includes: Dates, Order Counts, Delivery Status (Pending/Delivered), Payment Status
                   </p>
                 </div>
               </div>
             </div>
             
             <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10">
-              <h4 className="text-white font-medium mb-2">📋 Report Contents:</h4>
+              <h4 className="text-white font-medium mb-2">📋 CSV Report Contents:</h4>
               <ul className="text-white/70 text-sm space-y-1">
                 <li>• <strong>Date:</strong> Each day in the selected range</li>
                 <li>• <strong>Total Orders:</strong> Number of orders placed on that date</li>
@@ -766,6 +794,18 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                 <li>• <strong>Delivered Orders:</strong> Successfully completed orders</li>
                 <li>• <strong>Payment Status:</strong> Payment completion status</li>
               </ul>
+            </div>
+            
+            <div className="mt-4 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+              <h4 className="text-green-400 font-medium mb-2">📊 How to Use with Google Sheets:</h4>
+              <ol className="text-green-300 text-sm space-y-1">
+                <li>1. Click "Download CSV for Google Sheets"</li>
+                <li>2. Open Google Sheets (sheets.google.com)</li>
+                <li>3. Click "File" → "Import" → "Upload"</li>
+                <li>4. Select your downloaded CSV file</li>
+                <li>5. Choose "Replace spreadsheet" or "Create new spreadsheet"</li>
+                <li>6. Your data will be imported with proper formatting!</li>
+              </ol>
             </div>
             
             <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
@@ -781,10 +821,10 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                 }).length}</p>
                 {sharedOrders.length > 0 && (
                   <p>• <strong>Sample Order:</strong> {sharedOrders[0].customerName} - {new Date(sharedOrders[0].timestamp).toLocaleDateString()}</p>
-                )}
-              </div>
-            </div>
-          </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -793,20 +833,20 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                 <div>
                   <p className="text-white/70 text-sm">Total Orders</p>
                   <p className="text-3xl font-bold text-white">{totalOrders}</p>
-                </div>
+                    </div>
                 <div className="text-4xl">📦</div>
-              </div>
-            </div>
+                </div>
+                </div>
             
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/70 text-sm">Completed</p>
                   <p className="text-3xl font-bold text-green-400">{completedOrders}</p>
-                </div>
-                <div className="text-4xl">✅</div>
-              </div>
             </div>
+                <div className="text-4xl">✅</div>
+          </div>
+        </div>
             
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
               <div className="flex items-center justify-between">
@@ -816,9 +856,9 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                 </div>
                 <div className="text-4xl">🚚</div>
               </div>
-            </div>
-            
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/70 text-sm">Pending</p>
@@ -871,13 +911,13 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                       }`}>
                         {(storePaymentStatuses[store.storeId] || 'pending') === 'completed' ? '✅ Completed' : '⏳ Pending'}
                       </span>
-                    </div>
-                  </div>
+                      </div>
+                      </div>
                 ))}
                 {ordersByStore.length === 0 && (
                   <p className="text-white/50 text-center py-4">No orders data available for selected date</p>
                 )}
-              </div>
+                      </div>
             </div>
 
             {/* Orders by Status */}
@@ -941,13 +981,13 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                       <span className="text-green-400 font-semibold">
                         {Object.values(storePaymentStatuses).filter(status => status === 'completed').length}
                       </span>
-                    </div>
+              </div>
                     <div className="flex justify-between">
                       <span className="text-white/70">Pending Payments:</span>
                       <span className="text-yellow-400 font-semibold">
                         {Object.values(storePaymentStatuses).filter(status => status === 'pending').length}
                       </span>
-                    </div>
+          </div>
                     <div className="flex justify-between">
                       <span className="text-white/70">Total Stores:</span>
                       <span className="text-white font-semibold">{stores.length}</span>
