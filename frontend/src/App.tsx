@@ -50,6 +50,8 @@ interface SharedOrder {
   timestamp: Date;
   status: 'pending' | 'picked_up' | 'delivered';
   assignedDriverId?: number;
+  storeId?: number;
+  storeName?: string;
 }
 
 type StoreOwnerBill = {

@@ -11,6 +11,8 @@ interface Order {
   specialInstructions: string;
   assignedDriverId?: number;
   timestamp?: Date;
+  storeId?: number;
+  storeName?: string;
 }
 
 interface SharedOrder {
@@ -26,6 +28,8 @@ interface SharedOrder {
   timestamp: Date;
   status: 'pending' | 'picked_up' | 'delivered';
   assignedDriverId?: number;
+  storeId?: number;
+  storeName?: string;
 }
 
 interface Store {
@@ -273,7 +277,9 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
       ...currentOrder,
       customerLocation: effectiveLocation,
       id: orders.length + 1,
-      timestamp: new Date()
+      timestamp: new Date(),
+      storeId: selectedStore?.id,
+      storeName: selectedStore?.name
     };
     setOrders([...orders, newOrder]);
     
@@ -296,7 +302,9 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
         specialInstructions: currentOrder.specialInstructions,
         timestamp: new Date(),
         status: 'pending',
-        assignedDriverId: currentOrder.assignedDriverId
+        assignedDriverId: currentOrder.assignedDriverId,
+        storeId: selectedStore?.id,
+        storeName: selectedStore?.name
       };
       setSharedOrders([...sharedOrders, sharedOrder]);
     }
@@ -572,7 +580,9 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
         customerAddress: customer.address,
         customerLocation: customer.location,
         items: 'Imported order', // Default items
-        specialInstructions: 'Imported from data'
+        specialInstructions: 'Imported from data',
+        storeId: selectedStore?.id,
+        storeName: selectedStore?.name
       }));
 
       setOrders([...orders, ...newOrders]);
@@ -591,7 +601,9 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
           specialInstructions: 'Imported from data',
           timestamp: new Date(),
           status: 'pending',
-          assignedDriverId: undefined // Imported orders start unassigned
+          assignedDriverId: undefined, // Imported orders start unassigned
+          storeId: selectedStore?.id,
+          storeName: selectedStore?.name
         }));
         setSharedOrders([...sharedOrders, ...sharedOrdersToAdd]);
       }
@@ -1019,7 +1031,7 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
             </div>
             
             {step === 'data-import' && (
-              <button
+            <button
                 onClick={handleBackNavigation}
                 className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm border border-white/20 mr-2"
               >
@@ -1041,18 +1053,34 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 md:p-8 shadow-2xl max-w-2xl mx-auto border border-white/20">
               <h2 className="text-xl md:text-3xl font-bold text-white mb-4 md:mb-6">🚚 Dispatched!</h2>
               <div className="space-y-4 text-white/90">
-                <p className="text-lg">✅ {(storeOwnerId ? ownerSharedOrders.length : orders.length)} orders are on the way to customers</p>
+                <p className="text-lg">✅ {(storeOwnerId ? ownerSharedOrders : orders)
+                  .filter(order => {
+                    // Filter by selected store ID - works for both local and shared orders
+                    if (selectedStore?.id && order.storeId) {
+                      return order.storeId === selectedStore.id;
+                    }
+                    // If no store info, fallback to storeOwner filtering for backwards compatibility
+                    if (storeOwnerId && 'storeOwnerId' in order) {
+                      return order.storeOwnerId === storeOwnerId;
+                    }
+                    // For local orders without store info, show all
+                    return true;
+                  }).length} orders are on the way to customers</p>
                 <p className="text-sm text-white/70">Driver left with all packages at {new Date().toLocaleTimeString()}</p>
                 
                 <div className="bg-white/5 rounded-lg p-4 mt-6 border border-white/10">
                   <h3 className="font-bold text-white mb-3">📦 Dispatched Orders:</h3>
                   {(storeOwnerId ? ownerSharedOrders : orders)
                     .filter(order => {
-                      // For shared orders, check if they belong to the selected store
+                      // Filter by selected store ID - works for both local and shared orders
+                      if (selectedStore?.id && order.storeId) {
+                        return order.storeId === selectedStore.id;
+                      }
+                      // If no store info, fallback to storeOwner filtering for backwards compatibility
                       if (storeOwnerId && 'storeOwnerId' in order) {
                         return order.storeOwnerId === storeOwnerId;
                       }
-                      // For local orders, show all (they're already filtered by store selection)
+                      // For local orders without store info, show all
                       return true;
                     })
                     .map((order, index) => (
@@ -1602,10 +1630,10 @@ const StoreOwnerDashboard: React.FC<StoreOwnerDashboardProps> = ({
                  className="mt-2 md:mt-4 bg-white/10 backdrop-blur-sm rounded-xl p-2 md:p-4 border border-white/20"
                >
                  <h3 className="text-white font-bold text-sm md:text-base mb-2 md:mb-3 text-center">
-                   📋 Queue ({orders.length})
+                   📋 Queue - {selectedStore?.name} ({orders.filter(order => order.storeId === selectedStore?.id).length})
                  </h3>
                  <div className="space-y-1 md:space-y-2 max-h-24 md:max-h-32 overflow-y-auto">
-                   {orders.map((order, index) => (
+                   {orders.filter(order => order.storeId === selectedStore?.id).map((order, index) => (
                      <motion.div 
                        key={order.id}
                        initial={{ opacity: 0, x: -20 }}
