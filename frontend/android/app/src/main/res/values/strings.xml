@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cosmyk</string>
+    <string name="title_activity_main">Cosmyk</string>
+    <string name="package_name">com.cosmyk.app</string>
+    <string name="custom_url_scheme">com.cosmyk.app</string>
+</resources>

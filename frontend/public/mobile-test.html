@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mobile API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .info { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Mobile API Connection Test</h1>
+    
+    <div class="info">
+        <h3>Current Environment:</h3>
+        <p id="environment">Loading...</p>
+        <p id="api-url">Loading...</p>
+        <p id="capacitor-status">Loading...</p>
+    </div>
+
+    <div>
+        <h3>Test API Connection:</h3>
+        <button onclick="testConnection()">Test Backend Connection</button>
+        <div id="test-result"></div>
+    </div>
+
+    <div>
+        <h3>Test Login:</h3>
+        <input type="text" id="username" placeholder="Username" value="1">
+        <input type="password" id="password" placeholder="Password" value="1">
+        <button onclick="testLogin()">Test Login</button>
+        <div id="login-result"></div>
+    </div>
+
+    <script>
+        // Detect environment
+        const isMobileApp = !!(window.Capacitor);
+        const getApiBaseUrl = () => {
+            if (isMobileApp) {
+                return 'http://10.0.2.2:8000/api';
+            }
+            return 'http://localhost:8000/api';
+        };
+
+        // Update environment info
+        document.getElementById('environment').textContent = isMobileApp ? 'Mobile App (Capacitor)' : 'Web Browser';
+        document.getElementById('api-url').textContent = `API URL: ${getApiBaseUrl()}`;
+        document.getElementById('capacitor-status').textContent = `Capacitor Available: ${!!window.Capacitor}`;
+
+        async function testConnection() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.innerHTML = '<p>Testing connection...</p>';
+            
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/`);
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div class="success"><p>✅ Backend connection successful!</p></div>';
+                } else {
+                    resultDiv.innerHTML = `<div class="error"><p>❌ Backend responded with status: ${response.status}</p></div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error"><p>❌ Connection failed: ${error.message}</p><p>Make sure your backend is running on port 8000</p></div>`;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            resultDiv.innerHTML = '<p>Testing login...</p>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                const response = await fetch(`${getApiBaseUrl()}/auth/login`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = '<div class="success"><p>✅ Login successful!</p><p>Token received</p></div>';
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `<div class="error"><p>❌ Login failed: ${response.status}</p><p>${errorText}</p></div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error"><p>❌ Login failed: ${error.message}</p></div>`;
+            }
+        }
+
+        // Auto-test connection on load
+        window.onload = () => {
+            setTimeout(testConnection, 1000);
+        };
+    </script>
+</body>
+</html>

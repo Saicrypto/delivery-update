@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Info - Delivery Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .debug-section {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .status-good { color: #4ade80; }
+        .status-warning { color: #fbbf24; }
+        .status-error { color: #f87171; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐛 Delivery Management App - Debug Panel</h1>
+    
+    <div class="debug-section">
+        <h2>📱 Device Information</h2>
+        <p><strong>Screen Size:</strong> <span id="screenSize">Loading...</span></p>
+        <p><strong>User Agent:</strong> <span id="userAgent">Loading...</span></p>
+        <p><strong>Touch Support:</strong> <span id="touchSupport">Loading...</span></p>
+    </div>
+
+    <div class="debug-section">
+        <h2>🌐 Network Status</h2>
+        <p><strong>Main App:</strong> <span id="appStatus">Checking...</span></p>
+        <button onclick="testMainApp()">Test Main App</button>
+    </div>
+
+    <div class="debug-section">
+        <h2>🔧 Quick Actions</h2>
+        <button onclick="clearCache()">Clear Cache & Reload</button>
+        <button onclick="goToMainApp()">Go to Main App</button>
+        <button onclick="copyDebugInfo()">Copy Debug Info</button>
+    </div>
+
+    <div class="debug-section">
+        <h2>📋 Debug Log</h2>
+        <div id="debugLog" style="background: #000; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+            <div>Debug panel loaded...</div>
+        </div>
+    </div>
+
+    <script>
+        // Device Information
+        document.getElementById('screenSize').textContent = `${screen.width}x${screen.height} (viewport: ${window.innerWidth}x${window.innerHeight})`;
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        document.getElementById('touchSupport').textContent = 'ontouchstart' in window ? 'Yes' : 'No';
+
+        function log(message) {
+            const logDiv = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function testMainApp() {
+            log('Testing main app connection...');
+            fetch('/')
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('appStatus').innerHTML = '<span class="status-good">✅ Connected</span>';
+                        log('✅ Main app is accessible');
+                    } else {
+                        document.getElementById('appStatus').innerHTML = '<span class="status-error">❌ Error</span>';
+                        log('❌ Main app returned error: ' + response.status);
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('appStatus').innerHTML = '<span class="status-error">❌ Failed</span>';
+                    log('❌ Failed to connect to main app: ' + error.message);
+                });
+        }
+
+        function clearCache() {
+            log('Clearing cache and reloading...');
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                    });
+                    window.location.reload(true);
+                });
+            } else {
+                window.location.reload(true);
+            }
+        }
+
+        function goToMainApp() {
+            log('Redirecting to main app...');
+            window.location.href = '/';
+        }
+
+        function copyDebugInfo() {
+            const info = `
+Delivery Management App - Debug Info
+====================================
+Screen Size: ${screen.width}x${screen.height}
+Viewport: ${window.innerWidth}x${window.innerHeight}
+User Agent: ${navigator.userAgent}
+Touch Support: ${'ontouchstart' in window ? 'Yes' : 'No'}
+URL: ${window.location.href}
+Timestamp: ${new Date().toISOString()}
+            `;
+            navigator.clipboard.writeText(info).then(() => {
+                log('✅ Debug info copied to clipboard');
+            }).catch(() => {
+                log('❌ Failed to copy debug info');
+            });
+        }
+
+        // Auto-test on load
+        setTimeout(testMainApp, 1000);
+        log('Debug panel ready');
+    </script>
+</body>
+</html>
+
+
+
+
+

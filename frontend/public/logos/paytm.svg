@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Paytm">
+  <rect rx="10" ry="10" width="48" height="48" fill="#00baf2"/>
+  <g transform="translate(8,12)">
+    <rect x="0" y="8" width="32" height="4" fill="#002e6e"/>
+    <rect x="8" y="0" width="4" height="20" fill="#002e6e"/>
+    <rect x="20" y="0" width="4" height="20" fill="#002e6e"/>
+  </g>
+</svg>
+
+
+
+

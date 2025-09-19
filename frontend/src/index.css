@@ -1,0 +1,519 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Delivery App Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes boxFall1 {
+  0% {
+    top: -20px;
+    left: 10px;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 60px;
+    left: 20px;
+    opacity: 1;
+  }
+}
+
+@keyframes boxFall2 {
+  0% {
+    top: -20px;
+    left: 50px;
+    opacity: 0;
+  }
+  30% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    top: 60px;
+    left: 60px;
+    opacity: 1;
+  }
+}
+
+@keyframes boxFall3 {
+  0% {
+    top: -20px;
+    left: 80px;
+    opacity: 0;
+  }
+  60% {
+    opacity: 0;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    top: 60px;
+    left: 100px;
+    opacity: 1;
+  }
+}
+
+@keyframes boxFall4 {
+  0% {
+    top: -20px;
+    left: 120px;
+    opacity: 0;
+  }
+  80% {
+    opacity: 0;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 60px;
+    left: 140px;
+    opacity: 1;
+  }
+}
+
+@keyframes cartClose {
+  0% {
+    transform: rotateY(-90deg);
+    opacity: 0;
+  }
+  50% {
+    transform: rotateY(-45deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+  animation-delay: 2s;
+}
+
+@keyframes driveOff {
+  0% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(0); /* Stay for thumbs up */
+  }
+  100% {
+    transform: translateX(300vw);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 3D Cart Opening Effect */
+.cart-opening {
+  perspective: 1000px;
+}
+
+.cart-opening .cart-door {
+  transform-style: preserve-3d;
+}
+
+/* Animation Classes */
+.animate-slideInUp {
+  animation: slideInUp 0.6s ease-out;
+}
+
+.animate-boxFall1 {
+  animation: boxFall1 1s ease-in forwards;
+}
+
+.animate-boxFall2 {
+  animation: boxFall2 1.2s ease-in forwards;
+  animation-delay: 0.2s;
+}
+
+.animate-boxFall3 {
+  animation: boxFall3 1.4s ease-in forwards;
+  animation-delay: 0.4s;
+}
+
+.animate-boxFall4 {
+  animation: boxFall4 1.6s ease-in forwards;
+  animation-delay: 0.6s;
+}
+
+.animate-cartClose {
+  animation: cartClose 1s ease-in-out forwards;
+  animation-delay: 1.8s;
+}
+
+.animate-driveOff {
+  animation: driveOff 3s ease-in-out forwards;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.8s ease-out;
+}
+
+/* 3D Door Opening Animation */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Driver Position Animations */
+@keyframes standingToLeaning {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+@keyframes leaningToStanding {
+  0% { transform: translateY(4px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-standingToLeaning {
+  animation: standingToLeaning 0.5s ease-in-out forwards;
+}
+
+.animate-leaningToStanding {
+  animation: leaningToStanding 0.5s ease-in-out forwards;
+}
+
+/* Neon Effects */
+.neon-input:focus {
+  border-color: #00ffff !important;
+  box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+.neon-border {
+  border: 2px solid #ffffff;
+  box-shadow: 
+    0 0 5px #ffffff,
+    0 0 10px #ffffff,
+    0 0 15px #ffffff,
+    inset 0 0 5px #ffffff;
+  animation: neonPulse 2s ease-in-out infinite alternate;
+}
+
+.neon-border-cyan {
+  border: 2px solid #00ffff;
+  box-shadow: 
+    0 0 5px #00ffff,
+    0 0 10px #00ffff,
+    0 0 15px #00ffff,
+    inset 0 0 5px #00ffff;
+  animation: neonPulseCyan 2s ease-in-out infinite alternate;
+}
+
+.neon-text {
+  color: #ffffff;
+  text-shadow: 
+    0 0 5px #ffffff,
+    0 0 10px #ffffff,
+    0 0 15px #ffffff;
+}
+
+.neon-text-cyan {
+  color: #00ffff;
+  text-shadow: 
+    0 0 5px #00ffff,
+    0 0 10px #00ffff,
+    0 0 15px #00ffff;
+}
+
+@keyframes neonPulse {
+  0% {
+    box-shadow: 
+      0 0 5px #ffffff,
+      0 0 10px #ffffff,
+      0 0 15px #ffffff,
+      inset 0 0 5px #ffffff;
+  }
+  100% {
+    box-shadow: 
+      0 0 10px #ffffff,
+      0 0 20px #ffffff,
+      0 0 30px #ffffff,
+      inset 0 0 10px #ffffff;
+  }
+}
+
+@keyframes neonPulseCyan {
+  0% {
+    box-shadow: 
+      0 0 5px #00ffff,
+      0 0 10px #00ffff,
+      0 0 15px #00ffff,
+      inset 0 0 5px #00ffff;
+  }
+  100% {
+    box-shadow: 
+      0 0 10px #00ffff,
+      0 0 20px #00ffff,
+      0 0 30px #00ffff,
+      inset 0 0 10px #00ffff;
+  }
+}
+
+/* Package Style Form */
+.package-form {
+  background: #000000;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  position: relative;
+  box-shadow: 
+    0 0 10px #ffffff,
+    0 0 20px #ffffff,
+    inset 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.package-header {
+  border-bottom: 2px dashed #ffffff;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.package-field {
+  border: 1px solid #ffffff;
+  background: transparent;
+  color: #ffffff;
+  padding: 8px 12px;
+  margin: 5px 0;
+  border-radius: 4px;
+  width: 100%;
+  font-family: 'Courier New', monospace;
+}
+
+.package-field:focus {
+  border-color: #00ffff;
+  box-shadow: 0 0 5px #00ffff;
+  outline: none;
+}
+
+.package-field::placeholder {
+  color: #ffffff70;
+}
+
+/* Flying Box Animation - Mobile Optimized */
+@keyframes flyToCart {
+  0% {
+    transform: translateX(0) translateY(0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(-200px) translateY(-100px) scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(-400px) translateY(-200px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* Enhanced mobile flying animation */
+@keyframes flyToCartMobile {
+  0% {
+    transform: translateX(0) translateY(0) scale(1);
+    opacity: 1;
+    z-index: 9999;
+  }
+  25% {
+    transform: translateX(-100px) translateY(-50px) scale(0.9);
+    opacity: 0.9;
+    z-index: 9999;
+  }
+  50% {
+    transform: translateX(-200px) translateY(-100px) scale(0.8);
+    opacity: 0.8;
+    z-index: 9999;
+  }
+  75% {
+    transform: translateX(-300px) translateY(-150px) scale(0.6);
+    opacity: 0.7;
+    z-index: 9999;
+  }
+  100% {
+    transform: translateX(-400px) translateY(-200px) scale(0.3);
+    opacity: 0;
+    z-index: 9999;
+  }
+}
+
+.fly-to-cart {
+  animation: flyToCart 1.5s ease-in-out forwards;
+}
+
+.mini-box {
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 12px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  /* Make buttons more touch-friendly */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve input fields for mobile */
+  input, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Make scrolling smoother */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Reduce margin on mobile */
+  .mobile-compact {
+    margin: 0.5rem;
+    padding: 0.5rem;
+  }
+}
+
+/* Smooth Scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth scroll behavior */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Parallax Fade Scroll Effect */
+.parallax-scroll {
+  position: relative;
+}
+
+.parallax-scroll .order-item {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+/* Parallax scrollbar styling */
+.parallax-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.parallax-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.parallax-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+}
+
+.parallax-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* Order fade animation */
+@keyframes orderFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.order-item {
+  animation: orderFadeIn 0.6s ease-out;
+}
+
+/* Gradient overlay for scroll fade effect */
+.smooth-fade-scroll::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(to bottom, rgba(34, 197, 94, 0.8), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.smooth-fade-scroll::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to top, rgba(34, 197, 94, 0.8), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
