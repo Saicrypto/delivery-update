@@ -9,6 +9,15 @@ interface StoreOwner {
   createdAt: Date;
 }
 
+interface Driver {
+  id: number;
+  username: string;
+  password: string;
+  email: string;
+  phoneNumber: string;
+  createdAt: Date;
+}
+
 interface Store {
   id: number;
   name: string;
@@ -72,13 +81,21 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
   setPaymentData,
   setStoreOwnerBills
 }) => {
-  const [currentView, setCurrentView] = useState<'main' | 'manage-stores'>('main');
+  const [currentView, setCurrentView] = useState<'main' | 'manage-stores' | 'manage-drivers'>('main');
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [newStore, setNewStore] = useState<Omit<Store, 'id' | 'createdAt'>>({
     name: '',
     address: '',
     phone: '',
     ownerId: undefined
+  });
+  
+  const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
+  const [newDriver, setNewDriver] = useState<Omit<Driver, 'id' | 'createdAt'>>({
+    username: '',
+    password: '',
+    email: '',
+    phoneNumber: ''
   });
 
   // Store Management
@@ -108,6 +125,35 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
 
   const handleDeleteStore = (id: number) => {
     setStores(stores.filter(store => store.id !== id));
+  };
+
+  // Driver Management
+  const handleAddDriver = (e: React.FormEvent) => {
+    e.preventDefault();
+    const driver: Driver = {
+      id: drivers.length + 1,
+      ...newDriver,
+      createdAt: new Date()
+    };
+    setDrivers([...drivers, driver]);
+    setNewDriver({ username: '', password: '', email: '', phoneNumber: '' });
+  };
+
+  const handleUpdateDriver = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingDriver) {
+      setDrivers(drivers.map(driver => 
+        driver.id === editingDriver.id 
+          ? { ...driver, ...newDriver }
+          : driver
+      ));
+      setEditingDriver(null);
+      setNewDriver({ username: '', password: '', email: '', phoneNumber: '' });
+    }
+  };
+
+  const handleDeleteDriver = (id: number) => {
+    setDrivers(drivers.filter(driver => driver.id !== id));
   };
 
   // Main Dashboard View
@@ -161,6 +207,15 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
               <div className="text-4xl mb-4">🏪</div>
               <h3 className="text-xl font-bold text-white mb-2 group-hover:text-gray-200">Manage Stores</h3>
               <p className="text-white/70">Create, edit, and manage store locations and information.</p>
+            </button>
+
+            <button
+              onClick={() => setCurrentView('manage-drivers')}
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl p-8 border border-white/20 transition-all duration-200 text-left group"
+            >
+              <div className="text-4xl mb-4">🚚</div>
+              <h3 className="text-xl font-bold text-white mb-2 group-hover:text-gray-200">Manage Drivers</h3>
+              <p className="text-white/70">Create, edit, and manage driver accounts and profiles.</p>
             </button>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
@@ -306,6 +361,141 @@ const DeveloperDashboard: React.FC<DeveloperDashboardProps> = ({
                   <p>No stores added yet. Create your first store above!</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Driver Management View
+  if (currentView === 'manage-drivers') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-white">Manage Drivers</h1>
+            <button
+              onClick={() => setCurrentView('main')}
+              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm border border-white/20"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Add/Edit Driver Form */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <h2 className="text-xl font-bold text-white mb-6">
+                {editingDriver ? 'Edit Driver' : 'Add New Driver'}
+              </h2>
+              
+              <form onSubmit={editingDriver ? handleUpdateDriver : handleAddDriver} className="space-y-4">
+                <input
+                  type="text"
+                  value={newDriver.username}
+                  onChange={(e) => setNewDriver({...newDriver, username: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/90 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500"
+                  placeholder="Username"
+                  required
+                />
+                <input
+                  type="password"
+                  value={newDriver.password}
+                  onChange={(e) => setNewDriver({...newDriver, password: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/90 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500"
+                  placeholder="Password"
+                  required
+                />
+                <input
+                  type="email"
+                  value={newDriver.email}
+                  onChange={(e) => setNewDriver({...newDriver, email: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/90 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500"
+                  placeholder="Email"
+                  required
+                />
+                <input
+                  type="tel"
+                  value={newDriver.phoneNumber}
+                  onChange={(e) => setNewDriver({...newDriver, phoneNumber: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/90 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500"
+                  placeholder="Phone Number"
+                  required
+                />
+                
+                <div className="flex space-x-3">
+                  <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
+                  >
+                    {editingDriver ? 'Update' : 'Add'} Driver
+                  </button>
+                  {editingDriver && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingDriver(null);
+                        setNewDriver({ username: '', password: '', email: '', phoneNumber: '' });
+                      }}
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            {/* Drivers List */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <h2 className="text-xl font-bold text-white mb-6">Drivers ({drivers.length})</h2>
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {drivers.map(driver => (
+                  <div key={driver.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{driver.username}</h3>
+                        <p className="text-white/70 text-sm">{driver.email}</p>
+                        <p className="text-white/70 text-sm">{driver.phoneNumber}</p>
+                        <p className="text-white/50 text-xs mt-1">
+                          Created: {driver.createdAt.toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => {
+                            setEditingDriver(driver);
+                            setNewDriver({
+                              username: driver.username,
+                              password: driver.password,
+                              email: driver.email,
+                              phoneNumber: driver.phoneNumber
+                            });
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDriver(driver.id)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {drivers.length === 0 && (
+                  <div className="text-center py-8 text-white/50">
+                    <div className="text-4xl mb-4">🚚</div>
+                    <p className="text-sm">No drivers added yet</p>
+                    <p className="text-sm mt-2">Add your first driver to get started</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
